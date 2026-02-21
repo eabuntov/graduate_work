@@ -1,0 +1,83 @@
+@startuml
+title Movies Together - Frontend State Machine
+
+[*] --> Idle
+
+state Idle {
+}
+
+Idle --> FetchingMatches : Click "Movies Together"
+
+state FetchingMatches {
+}
+
+FetchingMatches --> MatchesLoaded : Matches received
+FetchingMatches --> Idle : Error
+
+MatchesLoaded --> CreatingSession : Select movie
+MatchesLoaded --> Idle : Cancel
+
+state CreatingSession {
+}
+
+CreatingSession --> ConnectingWS : Session created
+CreatingSession --> Idle : Error
+
+state ConnectingWS {
+}
+
+ConnectingWS --> SyncingInitialState : WS connected
+ConnectingWS --> Idle : WS error
+
+state SyncingInitialState {
+}
+
+SyncingInitialState --> Paused : Sync received / is_playing=false
+SyncingInitialState --> Playing : Sync received / is_playing=true
+
+state Playing {
+}
+
+state Paused {
+}
+
+Playing --> Paused : User presses Pause
+Paused --> Playing : User presses Play
+
+Playing --> Playing : Seek (local)
+Paused --> Paused : Seek (local)
+
+Playing --> SyncingCorrection : Sync drift detected
+Paused --> SyncingCorrection : Sync drift detected
+
+state SyncingCorrection {
+}
+
+SyncingCorrection --> Playing : Corrected & is_playing=true
+SyncingCorrection --> Paused : Corrected & is_playing=false
+
+Playing --> Buffering : Network lag
+Paused --> Buffering : Network lag
+
+state Buffering {
+}
+
+Buffering --> Playing : Resume & is_playing=true
+Buffering --> Paused : Resume & is_playing=false
+Buffering --> Reconnecting : WS disconnected
+
+Playing --> Reconnecting : WS disconnected
+Paused --> Reconnecting : WS disconnected
+
+state Reconnecting {
+}
+
+Reconnecting --> ConnectingWS : Retry success
+Reconnecting --> SessionEnded : Retry failed (timeout)
+
+Playing --> SessionEnded : Server ended session
+Paused --> SessionEnded : Server ended session
+
+SessionEnded --> Idle : Return to homepage
+
+@enduml
