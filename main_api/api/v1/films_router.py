@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from typing import List, Optional
 from models.models import FilmWork

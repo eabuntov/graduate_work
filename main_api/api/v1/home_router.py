@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from elasticsearch import AsyncElasticsearch
@@ -51,4 +51,23 @@ async def home(
     return templates.TemplateResponse(
         "index.html",
         {"request": {}, "films": films},
+    )
+
+@home_router.get("/movies/{movie_id}", response_class=HTMLResponse)
+def get_movie_page(
+    request: Request,
+    movie_id: str,
+    service: FilmService = Depends(get_film_service),
+):
+    film = service.get_film(movie_id)
+
+    if not film:
+        raise HTTPException(status_code=404, detail="Movie not found")
+
+    return templates.TemplateResponse(
+        "movie.html",
+        {
+            "request": request,
+            "film": film
+        }
     )

@@ -1,5 +1,6 @@
 import time
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from ws_manager import SessionManager
 router = APIRouter()
 manager = SessionManager()
 
+templates = Jinja2Templates(directory="templates")
 
 # Replace with your actual auth mechanism
 async def get_current_user_id(websocket: WebSocket) -> str:

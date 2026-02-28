@@ -94,16 +94,18 @@
     <h2>Featured Films</h2>
     <div class="films">
         {% for film in films %}
-        <div class="film-card">
-            <div
-                class="film-poster"
-                style="background-image: url('{{ film.poster_url or "/static/default_poster.jpg" }}');"
-            ></div>
-            <div class="film-info">
-                <div class="film-title">{{ film.title }}</div>
-                <div class="film-rating">⭐ {{ film.rating or "N/A" }}</div>
+        <a href="/movies/{{ film.id }}" style="text-decoration: none; color: inherit;">
+            <div class="film-card">
+                <div
+                    class="film-poster"
+                    style="background-image: url('{{ film.poster_url or "/static/default_poster.jpg" }}');"
+                ></div>
+                <div class="film-info">
+                    <div class="film-title">{{ film.title }}</div>
+                    <div class="film-rating">⭐ {{ film.rating or "N/A" }}</div>
+                </div>
             </div>
-        </div>
+        </a>
         {% endfor %}
     </div>
 </div>

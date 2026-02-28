@@ -187,7 +187,7 @@
 <script>
     async function watchTogether() {
         try {
-            const response = await fetch("/watch-sessions", {
+            const response = await fetch("localhost:8001/watch-sessions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ movie_id: {{ film.id }} })
@@ -196,7 +196,7 @@
             const data = await response.json();
 
             if (data.session_id) {
-                window.location.href = `/watch/${data.session_id}`;
+                window.location.href = `localhost:8001/watch/${data.session_id}`;
             } else {
                 alert("Failed to create session.");
             }
