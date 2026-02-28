@@ -1,0 +1,384 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "films API with Elasticsearch",
+    "version": "0.1.0",
+    "description": "API для работы с фильмами, жанрами и персоналиями. Поддерживает поиск, фильтрацию и пагинацию. Источник данных — Elasticsearch."
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["home"],
+        "summary": "Главная страница",
+        "description": "Рендеринг главной страницы с выборкой фильмов из Elasticsearch. Можно указать сортировку, фильтры по рейтингу и типу.",
+        "operationId": "home__get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{"type": "string"}, {"type": "null"}],
+              "title": "Sort"
+            },
+            "description": "Поле для сортировки (например: rating, title)."
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "Порядок сортировки: asc — по возрастанию, desc — по убыванию."
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{"type": "number"}, {"type": "null"}],
+              "title": "Min Rating"
+            },
+            "description": "Минимальный рейтинг фильмов для отображения."
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{"type": "number"}, {"type": "null"}],
+              "title": "Max Rating"
+            },
+            "description": "Максимальный рейтинг фильмов для отображения."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{"type": "string"}, {"type": "null"}],
+              "title": "Type"
+            },
+            "description": "Тип фильма: movie или tv_show."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Количество фильмов для отображения на странице."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Смещение выборки (для пагинации)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ с HTML-страницей фильмов.",
+            "content": {"text/html": {"schema": {"type": "string"}}}
+          },
+          "422": {
+            "description": "Ошибка валидации входных параметров.",
+            "content": {
+              "application/json": {"schema": {"$ref": "#/components/schemas/HTTPValidationError"}}
+            }
+          }
+        }
+      }
+    },
+    "/films/{film_id}": {
+      "get": {
+        "tags": ["films"],
+        "summary": "Получить фильм по ID",
+        "description": "Возвращает детальную информацию о фильме по его уникальному идентификатору.",
+        "operationId": "get_film_films__film_id__get",
+        "parameters": [
+          {
+            "name": "film_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "title": "Film Id"},
+            "description": "Уникальный идентификатор фильма."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Информация о фильме успешно получена.",
+            "content": {
+              "application/json": {"schema": {"$ref": "#/components/schemas/FilmWork"}}
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации параметров запроса.",
+            "content": {
+              "application/json": {"schema": {"$ref": "#/components/schemas/HTTPValidationError"}}
+            }
+          }
+        }
+      }
+    },
+    "/films/": {
+      "get": {
+        "tags": ["films"],
+        "summary": "Список фильмов",
+        "description": "Возвращает список фильмов с возможностью сортировки, фильтрации и пагинации.",
+        "operationId": "list_films_films__get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{"type": "string"}, {"type": "null"}],
+              "title": "Sort"
+            },
+            "description": "Поле сортировки (например: rating, title)."
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "Порядок сортировки: asc или desc."
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "required": false,
+            "schema": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Min Rating"},
+            "description": "Минимальный рейтинг для фильтрации."
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "required": false,
+            "schema": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Max Rating"},
+            "description": "Максимальный рейтинг для фильтрации."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Type"},
+            "description": "Тип контента: movie или tv_show."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Количество записей для возврата."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "integer", "minimum": 0, "default": 0, "title": "Offset"},
+            "description": "Смещение начала выборки (для пагинации)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ с массивом фильмов.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/FilmWork"},
+                  "title": "Response List Films Films Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации входных параметров.",
+            "content": {
+              "application/json": {"schema": {"$ref": "#/components/schemas/HTTPValidationError"}}
+            }
+          }
+        }
+      }
+    },
+    "/search/": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Поиск фильмов",
+        "description": "Полнотекстовый поиск фильмов по названию, описанию, жанру или режиссёру. Возвращает результаты с пагинацией.",
+        "operationId": "search_films_search__get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {"type": "string", "description": "Строка поискового запроса", "title": "Query"},
+            "description": "Текст поискового запроса (например: star wars)."
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Номер страницы",
+              "default": 1,
+              "title": "Page Number"
+            },
+            "description": "Номер страницы для пагинации."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Количество результатов на странице",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Количество результатов, возвращаемых на одной странице."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ с массивом найденных фильмов.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/FilmWork"},
+                  "title": "Response Search Films Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации параметров запроса.",
+            "content": {
+              "application/json": {"schema": {"$ref": "#/components/schemas/HTTPValidationError"}}
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Проверка состояния (Healthcheck)",
+        "description": "Простой healthcheck для проверки доступности приложения. Возвращает 200 OK, если сервис работает корректно.",
+        "operationId": "healthcheck_health_get",
+        "responses": {
+          "200": {
+            "description": "Приложение доступно и отвечает на запросы.",
+            "content": {"application/json": {"schema": {}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FilmWork": {
+        "description": "Модель фильма с основной информацией: название, рейтинг, тип и даты создания.",
+        "properties": {
+          "id": {"type": "string", "title": "Id", "description": "Уникальный идентификатор фильма."},
+          "title": {"type": "string", "minLength": 1, "title": "Title", "description": "Название фильма."},
+          "description": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Description", "description": "Описание фильма."},
+          "creation_date": {"anyOf": [{"type": "string", "format": "date"}, {"type": "null"}], "title": "Creation Date", "description": "Дата выпуска фильма."},
+          "rating": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Rating", "description": "Рейтинг фильма (от 0 до 10)."},
+          "type": {"type": "string", "minLength": 1, "title": "Type", "description": "Тип контента: movie или tv_show."},
+          "created": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Created", "description": "Дата создания записи."},
+          "modified": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Modified", "description": "Дата последнего обновления записи."}
+        },
+        "type": "object",
+        "required": ["id", "title", "type"],
+        "title": "FilmWork"
+      },
+      "Genre": {
+        "description": "Жанр фильма: название, описание и метаданные.",
+        "properties": {
+          "id": {"type": "string", "title": "Id", "description": "Уникальный идентификатор жанра."},
+          "name": {"type": "string", "minLength": 1, "title": "Name", "description": "Название жанра."},
+          "description": {"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Description", "description": "Описание жанра."},
+          "created": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Created", "description": "Дата создания записи."},
+          "modified": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Modified", "description": "Дата изменения записи."}
+        },
+        "type": "object",
+        "required": ["id", "name"],
+        "title": "Genre"
+      },
+      "Person": {
+        "description": "Информация о человеке: актёре, режиссёре или сценаристе.",
+        "properties": {
+          "id": {"type": "string", "title": "Id", "description": "Уникальный идентификатор человека."},
+          "full_name": {"type": "string", "minLength": 1, "title": "Full Name", "description": "Полное имя персоны."},
+          "created": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Created", "description": "Дата создания записи."},
+          "modified": {"anyOf": [{"type": "string", "format": "date-time"}, {"type": "null"}], "title": "Modified", "description": "Дата последнего обновления записи."}
+        },
+        "type": "object",
+        "required": ["id", "full_name"],
+        "title": "Person"
+      },
+      "HTTPValidationError": {
+        "description": "Объект ошибки валидации входных данных.",
+        "properties": {
+          "detail": {
+            "items": {"$ref": "#/components/schemas/ValidationError"},
+            "type": "array",
+            "title": "Detail",
+            "description": "Список деталей ошибки."
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "description": "Описание одной ошибки валидации.",
+        "properties": {
+          "loc": {
+            "items": {"anyOf": [{"type": "string"}, {"type": "integer"}]},
+            "type": "array",
+            "title": "Location",
+            "description": "Путь к полю, вызвавшему ошибку."
+          },
+          "msg": {"type": "string", "title": "Message", "description": "Сообщение об ошибке."},
+          "type": {"type": "string", "title": "Error Type", "description": "Тип ошибки."}
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

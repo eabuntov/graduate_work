@@ -1,0 +1,127 @@
+services:
+  main_app:
+    build:
+      context: ./src/
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./src:/opt/app
+      - ./config:/opt/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"     # rotate when a log reaches 10MB
+        max-file: "3"       # keep last 3 files
+        tag: "fastapi_app"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://fastapi_app:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  theatre-db:
+    image: postgres:17.6-alpine
+    container_name: theatre-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - theatre_db_data:/var/lib/postgresql/data
+      - ./database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    expose:
+      - "${DB_PORT}"
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        tag: "theatre-db"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  redis:
+    image: redis:8.2.2-alpine
+    container_name: redis
+    env_file:
+      - .env
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        tag: "redis"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  test:
+    build:
+      context: ./tests
+    command: [ "pytest", "-v", "./", "--maxfail=1", "--disable-warnings", "-q" ]
+    env_file:
+      - .env
+    volumes:
+      - ./:/opt/app/
+      - ./config:/opt/app/src/config
+    networks:
+      - app-network
+
+  auth:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_app
+
+  auth_db:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_db
+
+  auth_redis:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_redis
+
+  jaeger:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: jaeger
+  
+  nginx:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: nginx
+
+
+volumes:
+  theatre_db_data:
+  redis_data:
+  auth_db_data:
+  auth_redis_data:
+
+networks:
+  app-network:
+    driver: bridge
