@@ -51,31 +51,6 @@ app.include_router(ws_router)
 
 
 # -----------------------------------------------------------------------------
-# Startup / Shutdown
-# -----------------------------------------------------------------------------
-
-@app.on_event("startup")
-def startup_event():
-    """
-    Verify DB connectivity on startup.
-    """
-    logger.info("Starting application...")
-
-    try:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-        logger.info("Database connection established.")
-    except Exception as e:
-        logger.exception("Database connection failed.")
-        raise e
-
-
-@app.on_event("shutdown")
-def shutdown_event():
-    logger.info("Shutting down application...")
-
-
-# -----------------------------------------------------------------------------
 # Healthcheck
 # -----------------------------------------------------------------------------
 

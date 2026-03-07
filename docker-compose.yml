@@ -1,5 +1,5 @@
 services:
-  main_app:
+  main_api:
     build:
       context: ./main_api/
     ports:
@@ -9,7 +9,7 @@ services:
     networks:
       - app-network
     volumes:
-      - ./src:/opt/app
+      - ./main_api:/opt/app
       - ./config:/opt/config
     logging:
       driver: "json-file"
@@ -78,30 +78,81 @@ services:
       retries: 5
       start_period: 15s
 
-#  redis:
-#    image: redis:8.2.2-alpine
-#    container_name: redis
-#    env_file:
-#      - .env
-#    ports:
-#      - "${REDIS_PORT}:${REDIS_PORT}"
-#    command: ["redis-server", "--save", "60", "1"]
-#    volumes:
-#      - redis_data:/data
-#    networks:
-#      - app-network
-#    logging:
-#      driver: "json-file"
-#      options:
-#        max-size: "5m"
-#        max-file: "3"
-#        tag: "redis"
-#    healthcheck:
-#      test: [ "CMD", "redis-cli", "ping" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#      start_period: 5s
+  redis:
+    image: redis:8.2.2-alpine
+    container_name: redis
+    env_file:
+      - .env
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        tag: "redis"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.5
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false   # disable security for test mode
+    expose:
+      - "${ELK_PORT}"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        tag: "elasticsearch"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://elasticsearch:9200/_cluster/health || exit 1" ]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  etl_worker:
+    build:
+      context: ./etl
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./etl:/opt/app
+      - ./config:/opt/config
+    depends_on:
+      main_api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "etl_worker"
+
 #
 #  test:
 #    build:
@@ -144,6 +195,7 @@ services:
 volumes:
   theatre_db_data:
   redis_data:
+  es_data:
   auth_db_data:
   auth_redis_data:
 
