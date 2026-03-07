@@ -181,11 +181,11 @@ services:
 #      file: auth_service/docker-compose.yml
 #      service: auth_redis
 #
-#  jaeger:
-#    extends:
-#      file: auth_service/docker-compose.yml
-#      service: jaeger
-#
+  jaeger:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: jaeger
+
 #  nginx:
 #    extends:
 #      file: auth_service/docker-compose.yml
