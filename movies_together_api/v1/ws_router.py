@@ -8,7 +8,7 @@ from db import get_db
 from models import WatchSession, WatchSessionParticipant
 from ws_manager import SessionManager
 
-router = APIRouter()
+ws_router = APIRouter()
 manager = SessionManager()
 
 templates = Jinja2Templates(directory="templates")
@@ -22,7 +22,7 @@ async def get_current_user_id(websocket: WebSocket) -> str:
     return "mock-user-id"
 
 
-@router.websocket("/ws/watch/{session_id}")
+@ws_router.websocket("/ws/watch/{session_id}")
 async def watch_session_ws(
     websocket: WebSocket,
     session_id: str,

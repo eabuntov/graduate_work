@@ -6,13 +6,12 @@ from uuid import UUID
 from fastapi.templating import Jinja2Templates
 
 from db import get_db
-from models import WatchSession, WatchSessionParticipant, Movie
-
-router = APIRouter()
+from models import WatchSession, WatchSessionParticipant, FilmWork
+player_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/watch/{session_id}", response_class=HTMLResponse)
+@player_router.get("/watch/{session_id}", response_class=HTMLResponse)
 def watch_player(
     request: Request,
     session_id: str,
@@ -29,8 +28,8 @@ def watch_player(
         raise HTTPException(status_code=404, detail="Session not found")
 
     movie = (
-        db.query(Movie)
-        .filter(Movie.id == session.movie_id)
+        db.query(FilmWork)
+        .filter(FilmWork.id == session.movie_id)
         .first()
     )
 

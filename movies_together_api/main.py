@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from db import engine
-from routers.player import router as player_router
-from ws_routes import router as ws_router
+from v1.player import player_router
+from v1.ws_router import ws_router
 
 
 # -----------------------------------------------------------------------------
