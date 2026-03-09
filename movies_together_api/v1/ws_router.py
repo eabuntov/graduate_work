@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from db import get_db
-from models import WatchSession, WatchSessionParticipant
+from models import WatchSession, WatchSessionParticipant, CreateWatchSessionRequest
 from ws_manager import SessionManager
 
 ws_router = APIRouter()
@@ -130,3 +130,47 @@ async def watch_session_ws(
 
     except WebSocketDisconnect:
         manager.disconnect(session_id, websocket)
+
+
+@ws_router.post("/watch-sessions")
+def create_watch_session(
+    payload: CreateWatchSessionRequest,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_user_id()
+
+    # Validate movie exists
+    movie = (
+        db.query(FilmWork)
+        .filter(FilmWork.id == UUID(payload.movie_id))
+        .first()
+    )
+
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+
+    # Create session
+    session = WatchSession(
+        id=uuid4(),
+        movie_id=movie.id,
+        host_user_id=user_id,
+        status="active",
+        current_position=0.0,
+        is_playing=False,
+    )
+
+    db.add(session)
+
+    # Add creator as participant
+    participant = WatchSessionParticipant(
+        session_id=session.id,
+        user_id=user_id,
+    )
+
+    db.add(participant)
+
+    db.commit()
+
+    return {
+        "session_id": str(session.id)
+    }

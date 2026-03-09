@@ -15,6 +15,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
+from pydantic import BaseModel
+
 from db import Base
 
 class FilmWork(Base):
@@ -134,3 +136,6 @@ class WatchSessionParticipant(Base):
         back_populates="watch_sessions",
         passive_deletes=True,
     )
+
+class CreateWatchSessionRequest(BaseModel):
+    movie_id: str
