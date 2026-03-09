@@ -160,7 +160,7 @@
         </div>
 
         <div class="buttons">
-            <button class="btn-primary" onclick="watchTogether()">
+            <button class="btn-primary" onclick="watchTogether(this)">
                 🎬 Watch Together
             </button>
             <button class="btn-secondary">
@@ -185,26 +185,26 @@
 </div>
 
 <script>
-    async function watchTogether() {
-        try {
-            const response = await fetch("localhost:8001/watch-sessions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ movie_id: {{ film.id }} })
-            });
+    async function watchTogether(btn) {
+    btn.disabled = true;
+    btn.innerText = "Starting session...";
 
-            const data = await response.json();
+    try {
+        const response = await fetch("/watch-sessions", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ movie_id: "{{ film.id }}" })
+        });
 
-            if (data.session_id) {
-                window.location.href = `localhost:8001/watch/${data.session_id}`;
-            } else {
-                alert("Failed to create session.");
-            }
+        const data = await response.json();
+        window.location.href = `/watch/${data.session_id}`;
 
-        } catch (err) {
-            alert("Error starting watch session.");
-        }
+    } catch {
+        alert("Could not start session.");
+        btn.disabled = false;
+        btn.innerText = "Watch Together";
     }
+}
 </script>
 
 </body>
