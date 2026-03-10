@@ -14,6 +14,7 @@ WORKDIR $APP_HOME
 # ---------- Python Dependencies ----------
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install "websockets"
 
 # ---------- Non-root user ----------
 RUN useradd -m appuser

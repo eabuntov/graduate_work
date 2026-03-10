@@ -13,7 +13,7 @@ from sqlalchemy.orm import DeclarativeBase
 # Configuration
 # -----------------------------------------------------------------------------
 
-DATABASE_URL = f"postgresql+asyncpg://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}@172.24.0.3:5432/{os.getenv("DB_NAME")}"
+DATABASE_URL = f"postgresql+asyncpg://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}@theatre-db:5432/{os.getenv("DB_NAME")}"
 
 
 # -----------------------------------------------------------------------------

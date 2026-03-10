@@ -32,11 +32,12 @@ async def watch_player(
 
     # Load movie
     result = await db.execute(
-        select(FilmWork, FilmWorkStorage.video_url)
+        select(FilmWork.title, FilmWorkStorage.video_url)
         .join(FilmWorkStorage, FilmWork.id == FilmWorkStorage.film_work_id)
         .where(FilmWork.id == session.movie_id)
     )
-    movie = result.scalar_one_or_none()
+    movie = result.one_or_none()
+    print(movie)
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
@@ -48,6 +49,5 @@ async def watch_player(
             "session_id": session_id,
             "movie_title": movie.title,
             "video_url": movie.video_url,
-            "poster_url": movie.poster_url,
         },
     )
