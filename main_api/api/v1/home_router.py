@@ -68,6 +68,7 @@ def get_movie_page(
         "movie.html",
         {
             "request": request,
-            "film": film
+            "film": film,
+            "movie_id": movie_id
         }
     )

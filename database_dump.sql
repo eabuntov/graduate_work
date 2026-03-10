@@ -25,6 +25,20 @@ CREATE TABLE content.film_work (
 
 ALTER TABLE content.film_work OWNER TO postgres;
 
+CREATE TABLE content.film_work_storage
+(
+    film_work_id uuid NOT NULL,
+    video_url character varying COLLATE pg_catalog."default" NOT NULL
+);
+
+
+ALTER TABLE IF EXISTS content.film_work_storage
+    ADD CONSTRAINT fk_film_work_id FOREIGN KEY (film_work_id)
+    REFERENCES content.film_work (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+ALTER TABLE content.film_work_storage OWNER TO postgres;
 --
 -- Name: genre; Type: TABLE; Schema: content; Owner: postgres
 --
@@ -401,22 +415,6 @@ CREATE INDEX IF NOT EXISTS idx_friendships_status
     ON friendships (user_id, status);
 
 
--- ============================================================
--- MOVIES
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS movies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title TEXT NOT NULL,
-    video_url TEXT NOT NULL,
-    poster_url TEXT,
-    duration_seconds INTEGER NOT NULL CHECK (duration_seconds > 0),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_movies_title
-    ON movies (title);
-
 
 -- ============================================================
 -- WANT TO WATCH LIST
@@ -459,13 +457,6 @@ CREATE TABLE IF NOT EXISTS watch_sessions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_session_movie
-        FOREIGN KEY (movie_id) REFERENCES movies(id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_session_host
-        FOREIGN KEY (host_id) REFERENCES users(id)
-        ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_watch_sessions_status

@@ -1,32 +1,32 @@
 import os
-from typing import Generator
+from typing import AsyncGenerator
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+)
+from sqlalchemy.orm import DeclarativeBase
 
 
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://postgres:postgres@localhost:5432/movies",
-)
+DATABASE_URL = f"postgresql+asyncpg://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}@172.24.0.3:5432/{os.getenv("DB_NAME")}"
 
 
 # -----------------------------------------------------------------------------
 # Engine
 # -----------------------------------------------------------------------------
 
-engine: Engine = create_engine(
+engine = create_async_engine(
     DATABASE_URL,
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True,      # Detect stale connections
-    pool_recycle=1800,       # Avoid idle disconnects
-    future=True,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    echo=False
 )
 
 
@@ -34,10 +34,10 @@ engine: Engine = create_engine(
 # Session Factory
 # -----------------------------------------------------------------------------
 
-SessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
+    class_=AsyncSession,
     autoflush=False,
-    autocommit=False,
     expire_on_commit=False,
 )
 
@@ -54,21 +54,19 @@ class Base(DeclarativeBase):
 # Dependency
 # -----------------------------------------------------------------------------
 
-def get_db() -> Generator:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    FastAPI dependency that provides a SQLAlchemy session.
+    FastAPI dependency that provides an async SQLAlchemy session.
 
     - Opens session
     - Commits if no exception
     - Rolls back on failure
     - Always closes
     """
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as db:
+        try:
+            yield db
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise

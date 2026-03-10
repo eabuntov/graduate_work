@@ -190,14 +190,14 @@
     btn.innerText = "Starting session...";
 
     try {
-        const response = await fetch("/watch-sessions", {
+        const response = await fetch("http://127.0.0.1:8001/watch-sessions", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ movie_id: "{{ film.id }}" })
+            body: JSON.stringify({ movie_id: "{{ movie_id }}" })
         });
 
         const data = await response.json();
-        window.location.href = `/watch/${data.session_id}`;
+        window.location.href = `http://127.0.0.1:8001/watch/${data.session_id}`;
 
     } catch {
         alert("Could not start session.");

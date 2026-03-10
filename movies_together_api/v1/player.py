@@ -1,37 +1,42 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
 from db import get_db
-from models import WatchSession, WatchSessionParticipant, FilmWork
+from models import WatchSession, FilmWork, FilmWorkStorage
+
+
 player_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
 @player_router.get("/watch/{session_id}", response_class=HTMLResponse)
-def watch_player(
+async def watch_player(
     request: Request,
     session_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     # Validate session
-    session = (
-        db.query(WatchSession)
-        .filter(WatchSession.id == UUID(session_id))
-        .first()
+    result = await db.execute(
+        select(WatchSession).where(WatchSession.id == UUID(session_id))
     )
+    session = result.scalar_one_or_none()
 
     if not session or session.status != "active":
         raise HTTPException(status_code=404, detail="Session not found")
 
-    movie = (
-        db.query(FilmWork)
-        .filter(FilmWork.id == session.movie_id)
-        .first()
+    # Load movie
+    result = await db.execute(
+        select(FilmWork, FilmWorkStorage.video_url)
+        .join(FilmWorkStorage, FilmWork.id == FilmWorkStorage.film_work_id)
+        .where(FilmWork.id == session.movie_id)
     )
+    movie = result.scalar_one_or_none()
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
