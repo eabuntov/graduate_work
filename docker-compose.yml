@@ -10,7 +10,7 @@ services:
       - app-network
     volumes:
       - ./main_api:/opt/app
-      - ./config:/opt/config
+      - ./config:/opt/app/config
     logging:
       driver: "json-file"
       options:
@@ -35,7 +35,7 @@ services:
       - app-network
     volumes:
       - ./movies_together_api:/opt/app
-      - ./config:/opt/config
+      - ./config:/opt/app/config
     logging:
       driver: "json-file"
       options:

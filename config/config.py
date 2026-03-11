@@ -8,7 +8,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def setup_logging(log_level: str = logging.INFO) -> None:
+def setup_logging(log_level: str = logging.DEBUG) -> None:
     """Configure logging for the ETL worker."""
     log_dir = Path("/opt/app/logs")
     log_dir.mkdir(parents=True, exist_ok=True)

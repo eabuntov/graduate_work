@@ -5,11 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from sqlalchemy import text
 
+from config.config import setup_logging
 from v1.player import player_router
 from v1.ws_router import ws_router
 
 
-logging.basicConfig(level=logging.INFO)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 

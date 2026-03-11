@@ -1,3 +1,4 @@
+import logging
 import time
 import uuid
 from uuid import UUID, uuid4
@@ -26,11 +27,11 @@ async def get_current_user_id(websocket: WebSocket) -> str:
     token = websocket.headers.get("authorization")
     if not token:
         raise HTTPException(status_code=401)
-    return "mock-user-id"
+    return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
 
 
 def get_mock_user_id():
-    return uuid.uuid4()
+    return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
 
 
 # -----------------------------------------------------------------------------
@@ -43,31 +44,33 @@ async def watch_session_ws(
     session_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    await websocket.accept()
+    session_uuid = UUID(session_id)
+
+    result = await db.execute(
+        select(WatchSession).where(WatchSession.id == session_uuid)
+    )
+    session = result.scalar_one_or_none()
+
+    logging.debug(f"{session=}")
+
+    if not session or session.status != "active":
+        await websocket.close(code=4004)
+        return
 
     user_id = get_mock_user_id()
 
-    # Validate session
-    result = await db.execute(
-        select(WatchSession).where(WatchSession.id == UUID(session_id))
-    )
-    session: WatchSession | None = result.scalar_one_or_none()
-
-    if not session or session.status != "active":
-        # await websocket.close(code=4004)
-        return
-
-    # Validate participant
     result = await db.execute(
         select(WatchSessionParticipant).where(
-            WatchSessionParticipant.session_id == UUID(session_id),
+            WatchSessionParticipant.session_id == session_uuid,
             WatchSessionParticipant.user_id == user_id,
         )
     )
     participant = result.scalar_one_or_none()
 
+    logging.debug(f"{participant=}")
+
     if not participant:
-        # await websocket.close(code=4003)
+        await websocket.close(code=4003)
         return
 
     await manager.connect(session_id, websocket)
@@ -83,6 +86,7 @@ async def watch_session_ws(
 
         while True:
             data = await websocket.receive_json()
+            logging.debug(data)
             message_type = data.get("type")
 
             if message_type == "play":
@@ -130,7 +134,8 @@ async def watch_session_ws(
                     "timestamp": time.time(),
                 })
 
-    except WebSocketDisconnect:
+    except WebSocketDisconnect as e:
+        logging.error(e)
         manager.disconnect(session_id, websocket)
 
 
@@ -138,7 +143,7 @@ async def watch_session_ws(
 # Create Watch Session
 # -----------------------------------------------------------------------------
 
-@ws_router.post("/watch-sessions")
+@ws_router.post("/watch-session")
 async def create_watch_session(
     payload: CreateWatchSessionRequest,
     db: AsyncSession = Depends(get_db),

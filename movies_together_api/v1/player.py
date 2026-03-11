@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, HTTPException
@@ -37,7 +38,6 @@ async def watch_player(
         .where(FilmWork.id == session.movie_id)
     )
     movie = result.one_or_none()
-    print(movie)
 
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
