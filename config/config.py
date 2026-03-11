@@ -19,7 +19,7 @@ def setup_logging(log_level: str = logging.INFO) -> None:
         "formatters": {
             "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
             "detailed": {
-                "format": "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d) [trace_id=%(trace_id)s]: %(message)s"
+                "format": "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s"
             },
         },
         "handlers": {

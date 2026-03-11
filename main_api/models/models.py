@@ -12,6 +12,7 @@ class FilmWork(BaseModel):
     type: str = Field(..., min_length=1)
     created: Optional[datetime.datetime] = None
     modified: Optional[datetime.datetime] = None
+    poster_url: Optional[str] = None
 
 
 class Genre(BaseModel):

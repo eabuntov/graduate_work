@@ -19,7 +19,8 @@ CREATE TABLE content.film_work (
     rating double precision,
     type text NOT NULL,
     created timestamp without time zone,
-    modified timestamp without time zone
+    modified timestamp without time zone,
+    poster_url varchar
 );
 
 

@@ -3,6 +3,7 @@ SELECT  fw.id,
         fw.description,
         fw.rating,
         fw.type,
+        fw.poster_url,
         array_agg(DISTINCT g.name) AS genres,
         json_agg(DISTINCT jsonb_build_object('id', p.id, 'name', p.full_name, 'role', pfw.role))
             FILTER (WHERE p.id IS NOT NULL) AS persons

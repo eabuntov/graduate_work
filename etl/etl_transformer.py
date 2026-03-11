@@ -20,6 +20,7 @@ class MovieTransformer:
             "genres": row.get("genres", []),
             "title": row["title"],
             "type": row["type"],
+            "poster_url": row["poster_url"],
             "description": row["description"],
             "directors_names": [p["name"] for p in grouped["directors"]],
             "actors_names": [p["name"] for p in grouped["actors"]],

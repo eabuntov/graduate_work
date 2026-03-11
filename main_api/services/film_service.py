@@ -74,7 +74,7 @@ class FilmService:
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["title", "description", "genres", "directors_names"],
+                    "fields": ["title", "description", "genres", "directors_names", "poster_url"],
                     "fuzziness": "auto",
                 }
             },

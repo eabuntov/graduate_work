@@ -52,6 +52,10 @@
         "type": "text",
         "analyzer": "ru_en"
       },
+      "poster_url": {
+        "type": "text",
+        "analyzer": "ru_en"
+      },
       "genres": {
         "type": "text",
         "analyzer": "ru_en",

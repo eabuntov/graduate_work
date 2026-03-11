@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import (
     Column,
@@ -55,6 +56,7 @@ class FilmWork(Base):
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    poster_url: Optional[str] = None
 
 
 class FilmWorkStorage(Base):

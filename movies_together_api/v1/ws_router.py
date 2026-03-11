@@ -54,7 +54,7 @@ async def watch_session_ws(
     session: WatchSession | None = result.scalar_one_or_none()
 
     if not session or session.status != "active":
-        await websocket.close(code=4004)
+        # await websocket.close(code=4004)
         return
 
     # Validate participant
@@ -67,7 +67,7 @@ async def watch_session_ws(
     participant = result.scalar_one_or_none()
 
     if not participant:
-        await websocket.close(code=4003)
+        # await websocket.close(code=4003)
         return
 
     await manager.connect(session_id, websocket)
