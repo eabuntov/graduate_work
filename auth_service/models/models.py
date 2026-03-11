@@ -38,7 +38,7 @@ from enum import Enum
 from typing import Optional
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
-
+from fastapi import Form
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -82,7 +82,18 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8)
+    email: EmailStr
+    password: str
+    full_name: str
+
+    @classmethod
+    def as_form(
+            cls,
+            email: EmailStr = Form(...),
+            password: str = Form(...),
+            full_name: str = Form(...),
+    ):
+        return cls(email=email, password=password, full_name=full_name)
 
 
 class UserRead(UserBase):
@@ -228,6 +239,14 @@ class PagedResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+    @classmethod
+    def as_form(
+            cls,
+            email: EmailStr = Form(...),
+            password: str = Form(...)
+    ):
+        return cls(email=email, password=password)
 
 
 class SubscriptionAssign(BaseModel):

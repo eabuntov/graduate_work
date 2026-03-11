@@ -15,6 +15,7 @@ class LoginHistoryRepository:
         )
         self.session.add(record)
         await self.session.flush()
+        await self.session.commit()
         return record
 
     async def get_by_user(self, user_id: UUID, limit: int, offset: int):

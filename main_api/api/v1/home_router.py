@@ -54,12 +54,12 @@ async def home(
     )
 
 @home_router.get("/movies/{movie_id}", response_class=HTMLResponse)
-def get_movie_page(
+async def get_movie_page(
     request: Request,
     movie_id: str,
     service: FilmService = Depends(get_film_service),
 ):
-    film = service.get_film(movie_id)
+    film = await service.get_film(movie_id)
 
     if not film:
         raise HTTPException(status_code=404, detail="Movie not found")

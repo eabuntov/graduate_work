@@ -1,19 +1,20 @@
 import logging
 import time
-import uuid
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
+from dependencies.auth import get_current_user
+from db import get_db
 from db import get_db
 from models import WatchSession, WatchSessionParticipant, CreateWatchSessionRequest, FilmWork
 from ws_manager import SessionManager
 
 
-ws_router = APIRouter()
+ws_router = APIRouter(prefix="/ws", dependencies=[Depends(get_current_user)])
 manager = SessionManager()
 
 templates = Jinja2Templates(directory="templates")
@@ -30,15 +31,12 @@ async def get_current_user_id(websocket: WebSocket) -> str:
     return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
 
 
-def get_mock_user_id():
-    return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
-
 
 # -----------------------------------------------------------------------------
 # WebSocket Watch Session
 # -----------------------------------------------------------------------------
 
-@ws_router.websocket("/ws/watch/{session_id}")
+@ws_router.websocket("/watch/{session_id}")
 async def watch_session_ws(
     websocket: WebSocket,
     session_id: str,
@@ -57,7 +55,11 @@ async def watch_session_ws(
         await websocket.close(code=4004)
         return
 
-    user_id = get_mock_user_id()
+    user_id = get_current_user()
+    if not user_id:
+        return RedirectResponse(url="/auth/login?next=/", status_code=303)
+
+    logging.debug(f"{user_id=}")
 
     result = await db.execute(
         select(WatchSessionParticipant).where(
@@ -148,7 +150,10 @@ async def create_watch_session(
     payload: CreateWatchSessionRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = get_mock_user_id()
+    user_id = get_current_user()
+    if not user_id:
+        return RedirectResponse(url="/auth/login?next=/", status_code=303)
+    logging.debug(f"{user_id=}")
 
     # Validate movie exists
     result = await db.execute(

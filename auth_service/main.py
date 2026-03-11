@@ -9,7 +9,7 @@ from services.tracing import setup_tracing
 from api.v1.api_router import api_router
 
 
-setup_tracing()
+# setup_tracing()
 
 app = FastAPI(title=settings.SERVICE_NAME)
 

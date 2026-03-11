@@ -21,13 +21,16 @@ class UserRepository:
         user = User(**kwargs)
         self.session.add(user)
         await self.session.flush()
+        await self.session.commit()
         return user
 
     async def update(self, user: User, **kwargs):
         for k, v in kwargs.items():
             setattr(user, k, v)
         await self.session.flush()
+        await self.session.commit()
         return user
 
     async def delete(self, user: User):
         await self.session.delete(user)
+        await self.session.commit()

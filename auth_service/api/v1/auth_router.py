@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from redis import Redis
 from sqlalchemy import UUID
@@ -29,9 +29,9 @@ from api.v1.oauth_classes import OAuthProvider
 auth_router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(rate_limit("auth"))])
 
 
-@auth_router.post("/register", response_model=UserRead)
+@auth_router.post("/register")
 async def register_user(
-    data: UserCreate, users: UserService = Depends(get_user_service)
+    data: UserCreate = Depends(UserCreate.as_form), users: UserService = Depends(get_user_service)
 ):
     return await users.register(
         email=data.email, password=data.password, full_name=data.full_name
@@ -40,8 +40,8 @@ async def register_user(
 
 @auth_router.post("/login")
 async def login_user(
-    data: UserLogin,
     request: Request,
+    data: UserLogin = Depends(UserLogin.as_form),
     users: UserService = Depends(get_user_service),
     tokens: TokenService = Depends(get_token_service),
     history: LoginHistoryService = Depends(get_login_history_service),
@@ -52,7 +52,19 @@ async def login_user(
         await history.record_login(
             user.id, request.client.host, request.headers.get("User-Agent")
         )
-        return tokens.create_token_pair(user)
+        redirect_url = request.query_params.get("next", "/")
+
+        response = RedirectResponse(url=redirect_url, status_code=303)
+        token_values = tokens.create_token_pair(user)
+        response.set_cookie(
+            key="access_token",
+            value=token_values["access_token"]
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=token_values["refresh_token"]
+        )
+        return response
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Incorrect username or password",
@@ -156,6 +168,15 @@ request: Request
 ):
     return templates.TemplateResponse(
         "login.html",
+        {"request": request}
+    )
+
+@auth_router.get("/register", response_class=HTMLResponse)
+async def register_oauth(
+request: Request
+):
+    return templates.TemplateResponse(
+        "register.html",
         {"request": request}
     )
 

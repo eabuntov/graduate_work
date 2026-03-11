@@ -29,8 +29,8 @@ class TokenService:
     def create_token_pair(
         self,
         user: User,
-        roles: list[str],
-        entitlements: list[str],
+        roles: list[str] = [],
+        entitlements: list[str] = [],
     ) -> dict:
         """
         Returns {"access_token": ..., "refresh_token": ...}

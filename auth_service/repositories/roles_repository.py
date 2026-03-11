@@ -23,14 +23,17 @@ class RoleRepository:
         role = Role(**kwargs)
         self.session.add(role)
         await self.session.flush()
+        await self.session.commit()
         return role
 
     async def update(self, role: Role, **kwargs) -> Role:
         for k, v in kwargs.items():
             setattr(role, k, v)
         await self.session.flush()
+        await self.session.commit()
         return role
 
     async def delete(self, role: Role):
         await self.session.delete(role)
         await self.session.flush()
+        await self.session.commit()
