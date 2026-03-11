@@ -172,72 +172,106 @@
 </div>
 
 <script>
-    const sessionId = "{{ session_id }}";
-    const protocol = location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${location.host}/ws/watch/${sessionId}`);
-    const player = videojs('my-video');
-    const chatBox = document.getElementById("chat");
+const sessionId = "{{ session_id }}";
+const protocol = location.protocol === "https:" ? "wss" : "ws";
+const ws = new WebSocket(`${protocol}://${location.host}/ws/watch/${encodeURIComponent(sessionId)}`);
 
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+const player = videojs('my-video');
+const chatBox = document.getElementById("chat");
 
-        if (data.type === "sync") {
-            const delta = data.position - player.currentTime();
-            if (Math.abs(delta) > 0.5) {
-                player.currentTime(data.position);
-            }
+ws.onopen = () => console.log("WS connected");
+ws.onerror = (err) => console.error("WS error", err);
+ws.onclose = () => console.log("WS closed");
 
-            if (data.is_playing && player.paused()) {
-                player.play();
-            }
+const chatInput = document.getElementById("chat-input");
 
-            if (!data.is_playing && !player.paused()) {
-                player.pause();
-            }
-        }
-
-        if (data.type === "chat") {
-            const div = document.createElement("div");
-            div.className = "chat-message";
-            div.innerHTML = `<b>${data.user_id}</b>: ${data.message}`;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    };
-
-    player.on('play', () => {
-        ws.send(JSON.stringify({
-            type: "play",
-            position: player.currentTime()
-        }));
-    });
-
-    player.on('pause', () => {
-        ws.send(JSON.stringify({
-            type: "pause",
-            position: player.currentTime()
-        }));
-    });
-
-    player.on('seeked', () => {
-        ws.send(JSON.stringify({
-            type: "seek",
-            position: player.currentTime()
-        }));
-    });
-
-    function sendMessage() {
-        const input = document.getElementById("chat-input");
-        const text = input.value.trim();
-        if (!text) return;
-
-        ws.send(JSON.stringify({
-            type: "chat",
-            message: text
-        }));
-
-        input.value = "";
+chatInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();   // prevents newline / form submit
+        sendMessage();
     }
+});
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("WS incoming:", data);
+
+    if (data.type === "sync") {
+        const delta = data.position - player.currentTime();
+
+        if (Math.abs(delta) > 0.5) {
+            player.currentTime(data.position);
+        }
+
+        if (data.is_playing && player.paused()) {
+            player.play();
+        }
+
+        if (!data.is_playing && !player.paused()) {
+            player.pause();
+        }
+    }
+
+    if (data.type === "chat") {
+        const div = document.createElement("div");
+        div.className = "chat-message";
+        div.textContent = `${data.user_id}: ${data.message}`;
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+};
+
+function sendWS(payload) {
+    const message = JSON.stringify(payload);
+    console.log("WS outgoing:", payload);
+
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+    } else {
+        console.warn("WS not open, message dropped:", payload);
+    }
+}
+
+player.on('play', () => {
+    sendWS({
+        type: "play",
+        position: player.currentTime()
+    });
+});
+
+player.on('pause', () => {
+    sendWS({
+        type: "pause",
+        position: player.currentTime()
+    });
+});
+
+player.on('seeked', () => {
+    sendWS({
+        type: "seek",
+        position: player.currentTime()
+    });
+});
+
+function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    sendWS({
+        type: "chat",
+        message: text
+    });
+
+    const div = document.createElement("div");
+    div.className = "chat-message";
+    div.textContent = `me: ${text}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    input.value = "";
+}
 </script>
 
 </body>
