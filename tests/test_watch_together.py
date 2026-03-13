@@ -8,6 +8,7 @@ from main import app
 from db import Base, engine, SessionLocal
 from models import WatchSession, WatchSessionParticipant, Movie
 
+from tests.conftest import create_test_session
 
 
 # -----------------------------------------------------------------------------

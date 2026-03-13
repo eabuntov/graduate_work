@@ -31,9 +31,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
 app.include_router(player_router)
 app.include_router(ws_router)
 

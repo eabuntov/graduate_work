@@ -1,4 +1,3 @@
-from sys import prefix
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, HTTPException

@@ -178,19 +178,19 @@ services:
     networks:
       - app-network
 
-#
-#  test:
-#    build:
-#      context: ./tests
-#    command: [ "pytest", "-v", "./", "--maxfail=1", "--disable-warnings", "-q" ]
-#    env_file:
-#      - .env
-#    volumes:
-#      - ./:/opt/app/
-#      - ./config:/opt/app/src/config
-#    networks:
-#      - app-network
-#
+
+  test:
+    build:
+      context: ./tests
+    command: [ "pytest", "-v", "./", "--maxfail=1", "--disable-warnings", "-q" ]
+    env_file:
+      - .env
+    volumes:
+      - ./:/opt/app/
+      - ./config:/opt/app/src/config
+    networks:
+      - app-network
+
   auth:
     extends:
       file: auth_service/docker-compose.yml

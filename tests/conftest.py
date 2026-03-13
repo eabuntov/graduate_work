@@ -1,10 +1,12 @@
 import sys
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
 
-from movies_together_api.models import WatchSessionParticipant, WatchSession, Movie
+from movies_together_api.main import app
+from movies_together_api.models import WatchSessionParticipant, WatchSession, FilmWork
 
 sys.path.append("/opt/app/src")
 
@@ -43,7 +45,7 @@ def create_test_session(db):
     session_id = uuid4()
     user_id = uuid4()
 
-    movie = Movie(
+    movie = FilmWork(
         id=movie_id,
         title="Test Movie",
         video_url="http://example.com/video.mp4",
