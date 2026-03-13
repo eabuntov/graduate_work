@@ -10,11 +10,11 @@ from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
 from models.models import FilmWork
 
-from dependencies.auth import get_anonymous_user
+from dependencies.auth import require_user
 
 templates = Jinja2Templates(directory="templates")
 
-home_router = APIRouter(tags=["home"], dependencies=[Depends(get_anonymous_user)])
+home_router = APIRouter(tags=["home"], dependencies=[Depends(require_user)])
 
 
 async def get_elastic_client() -> AsyncGenerator[AsyncElasticsearch, Any]:

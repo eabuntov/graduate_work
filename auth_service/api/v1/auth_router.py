@@ -58,11 +58,17 @@ async def login_user(
         token_values = tokens.create_token_pair(user)
         response.set_cookie(
             key="access_token",
-            value=token_values["access_token"]
+            value=token_values["access_token"],
+            httponly = True,
+            secure = True,
+            samesite = "lax"
         )
         response.set_cookie(
             key="refresh_token",
-            value=token_values["refresh_token"]
+            value=token_values["refresh_token"],
+            httponly=True,
+            secure=True,
+            samesite="lax"
         )
         return response
     raise HTTPException(

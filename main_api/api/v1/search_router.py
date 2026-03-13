@@ -7,9 +7,9 @@ from models.models import FilmWork
 from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
 
-from dependencies.auth import get_current_user
+from dependencies.auth import require_user
 
-films_search_router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(get_current_user)])
+films_search_router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(require_user)])
 
 
 # --- Dependencies ---

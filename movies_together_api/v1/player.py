@@ -7,16 +7,15 @@ from fastapi.templating import Jinja2Templates
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from dependencies.auth import get_current_user
 from db import get_db
 from models import WatchSession, FilmWork, FilmWorkStorage
 
 
-player_router = APIRouter(prefix="/player", dependencies=[Depends(get_current_user)])
+player_router = APIRouter(prefix="/player")
 templates = Jinja2Templates(directory="templates")
 
 
-@player_router.get("/watch/{session_id}", response_class=HTMLResponse)
+@player_router.get("/watch/{session_id}")
 async def watch_player(
     request: Request,
     session_id: str,

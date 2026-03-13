@@ -7,14 +7,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from dependencies.auth import get_current_user
+from dependencies.auth import require_user, require_user_ws
 from db import get_db
 from db import get_db
 from models import WatchSession, WatchSessionParticipant, CreateWatchSessionRequest, FilmWork
 from ws_manager import SessionManager
 
 
-ws_router = APIRouter(prefix="/ws", dependencies=[Depends(get_current_user)])
+ws_router = APIRouter(prefix="/ws")
 manager = SessionManager()
 
 templates = Jinja2Templates(directory="templates")
@@ -40,6 +40,7 @@ async def get_current_user_id(websocket: WebSocket) -> str:
 async def watch_session_ws(
     websocket: WebSocket,
     session_id: str,
+    user_id: str = Depends(require_user_ws),
     db: AsyncSession = Depends(get_db),
 ):
     session_uuid = UUID(session_id)
@@ -55,9 +56,6 @@ async def watch_session_ws(
         await websocket.close(code=4004)
         return
 
-    user_id = get_current_user()
-    if not user_id:
-        return RedirectResponse(url="/auth/login?next=/", status_code=303)
 
     logging.debug(f"{user_id=}")
 
@@ -145,14 +143,12 @@ async def watch_session_ws(
 # Create Watch Session
 # -----------------------------------------------------------------------------
 
-@ws_router.post("/watch-session")
+@ws_router.post("/watch-session", response_model=None)
 async def create_watch_session(
     payload: CreateWatchSessionRequest,
+    user_id: str = Depends(require_user),
     db: AsyncSession = Depends(get_db),
 ):
-    user_id = get_current_user()
-    if not user_id:
-        return RedirectResponse(url="/auth/login?next=/", status_code=303)
     logging.debug(f"{user_id=}")
 
     # Validate movie exists

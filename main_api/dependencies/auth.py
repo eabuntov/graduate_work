@@ -1,21 +1,22 @@
-from fastapi import Depends, HTTPException, status
+import logging
+
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPAuthorizationCredentials
 import jwt
 
 from dependencies.security import bearer_scheme
 from dependencies.auth_settings import settings
+from fastapi.responses import RedirectResponse
 
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ):
     if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-        )
+        return {}
 
-    token = credentials.credentials
+    token = credentials
+    logging.debug(f"{token=}")
 
     try:
         payload = jwt.decode(
@@ -24,10 +25,9 @@ def get_current_user(
             algorithms=[settings.JWT_ALGORITHM],
             issuer=settings.AUTH_ISSUER,
         )
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        logging.warning("Token expired")
+        return {}
 
     return payload
 
@@ -53,3 +53,55 @@ def require_role(role: str):
             raise HTTPException(status_code=403, detail="Forbidden")
         return user
     return checker
+
+
+async def require_user(request: Request) -> str:
+    access_token = request.cookies.get("access_token")
+
+    if not access_token:
+        logging.debug("No access token")
+        raise HTTPException(
+            status_code=303,
+            headers={"Location": f"/auth/login?next={request.url.path}"}
+        )
+
+    jwt_options = {
+        'verify_signature': False,
+        'verify_exp': False,
+        'verify_nbf': False,
+        'verify_iat': False,
+        'verify_aud': False
+    }
+
+    try:
+        logging.debug(f"{access_token=}")
+        payload = jwt.decode(
+            access_token,
+            settings.JWT_ACCESS_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+            options=jwt_options,
+        )
+        logging.debug(payload)
+
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise jwt.PyJWTError("Invalid token payload")
+
+        request.state.user_id = str(user_id)
+
+        return str(user_id)
+
+    except jwt.ExpiredSignatureError as e:
+        logging.error(e)
+        raise HTTPException(
+            status_code=303,
+            headers={"Location": f"/auth/login?next={request.url.path}"}
+        )
+
+    except jwt.PyJWTError as e:
+        logging.error(e)
+        raise HTTPException(
+            status_code=303,
+            headers={"Location": f"/auth/login?next={request.url.path}"}
+        )
