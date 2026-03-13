@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, shrink-to-fit=no, viewport-fit=cover">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+<style>
+  html, body {
+    background: #eee;
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    max-width: 360px;
+    margin: 60px auto;
+    padding: 24px;
+    background: #fff;
+    border-radius: 4px;
+  }
+
+  h2 {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  form {
+    margin-bottom: 24px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  .divider {
+    text-align: center;
+    margin: 16px 0;
+    color: #666;
+  }
+</style>
+
+<script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-with-polyfills-latest.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Вход</h2>
+
+  <!-- Classic login/password -->
+  <form method="post" action="/auth/login">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required>
+
+    <label for="password">Пароль</label>
+    <input id="password" name="password" type="password" required>
+
+    <button type="submit">Войти</button>
+  </form>
+
+  <div class="divider">или</div>
+
+  <!-- Yandex OAuth -->
+  <div id="container"></div>
+</div>
+
+<script>
+  window.onload = function () {
+    window.YaAuthSuggest
+      .init(
+        {
+          client_id: 'cd2c533c4852488fa203aadb18bdd81b',
+          response_type: 'token',
+          redirect_uri: 'https://bcinema.ru/auth/redirect'
+        },
+        'https://bcinema.ru',
+        {
+          view: 'button',
+          parentId: 'container',
+          buttonView: 'main',
+          buttonTheme: 'light',
+          buttonSize: 'm',
+          buttonBorderRadius: 0
+        }
+      )
+      .then(function (result) {
+        return result.handler();
+      })
+      .then(function (data) {
+        console.log('OAuth token:', data);
+      })
+      .catch(function (error) {
+        console.error('OAuth error:', error);
+      });
+  };
+</script>
+
+</body>
+</html>

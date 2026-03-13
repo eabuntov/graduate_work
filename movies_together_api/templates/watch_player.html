@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ movie_title }} | Practix</title>
+
+    <link href="https://vjs.zencdn.net/8.23.4/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.23.4/video.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef3f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ===== Header (shared style) ===== */
+        header {
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            margin-right: 2rem;
+            font-size: 1.5rem;
+        }
+
+        nav a {
+            margin-right: 1.5rem;
+            text-decoration: none;
+            color: black;
+            font-weight: 500;
+        }
+
+        /* ===== Layout ===== */
+        .watch-wrapper {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .video-container {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .video-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .chat-message {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .chat-message b {
+            color: #d62828;
+        }
+
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .chat-input button {
+            padding: 0.8rem 1rem;
+            background: #d62828;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .chat-input button:hover {
+            background: #b71c1c;
+        }
+
+        /* Make video responsive */
+        .video-js {
+            width: 100% !important;
+            height: 500px !important;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>PRACTIX</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="#">TV Shows</a>
+        <a href="#">Films</a>
+        <a href="#">Latest</a>
+        <a href="#">My List</a>
+    </nav>
+</header>
+
+<div class="watch-wrapper">
+
+    <div class="video-container">
+        <div class="video-title">
+            {{ movie_title }} — Watch Party
+        </div>
+
+        <video
+            id="my-video"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+            poster="{{ poster_url }}"
+            data-setup="{}"
+        >
+            <source src="{{ video_url }}" type="video/mp4" />
+        </video>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            Live Chat
+        </div>
+
+        <div class="chat-messages" id="chat"></div>
+
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const sessionId = "{{ session_id }}";
+const protocol = location.protocol === "https:" ? "wss" : "ws";
+const ws = new WebSocket(`${protocol}://${location.host}/ws/watch/${encodeURIComponent(sessionId)}`);
+
+const player = videojs('my-video');
+const chatBox = document.getElementById("chat");
+
+ws.onopen = () => console.log("WS connected");
+ws.onerror = (err) => console.error("WS error", err);
+ws.onclose = () => console.log("WS closed");
+
+const chatInput = document.getElementById("chat-input");
+
+chatInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();   // prevents newline / form submit
+        sendMessage();
+    }
+});
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("WS incoming:", data);
+
+    if (data.type === "sync") {
+        const delta = data.position - player.currentTime();
+
+        if (Math.abs(delta) > 0.5) {
+            player.currentTime(data.position);
+        }
+
+        if (data.is_playing && player.paused()) {
+            player.play();
+        }
+
+        if (!data.is_playing && !player.paused()) {
+            player.pause();
+        }
+    }
+
+    if (data.type === "chat") {
+        const div = document.createElement("div");
+        div.className = "chat-message";
+        div.textContent = `${data.user_id}: ${data.message}`;
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+};
+
+function sendWS(payload) {
+    const message = JSON.stringify(payload);
+    console.log("WS outgoing:", payload);
+
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+    } else {
+        console.warn("WS not open, message dropped:", payload);
+    }
+}
+
+player.on('play', () => {
+    sendWS({
+        type: "play",
+        position: player.currentTime()
+    });
+});
+
+player.on('pause', () => {
+    sendWS({
+        type: "pause",
+        position: player.currentTime()
+    });
+});
+
+player.on('seeked', () => {
+    sendWS({
+        type: "seek",
+        position: player.currentTime()
+    });
+});
+
+function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    sendWS({
+        type: "chat",
+        message: text
+    });
+
+    const div = document.createElement("div");
+    div.className = "chat-message";
+    div.textContent = `me: ${text}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    input.value = "";
+}
+</script>
+
+</body>
+</html>

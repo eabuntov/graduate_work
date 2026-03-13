@@ -1,0 +1,231 @@
+services:
+  main_api:
+    build:
+      context: ./main_api/
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./main_api:/opt/app
+      - ./config:/opt/app/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"     # rotate when a log reaches 10MB
+        max-file: "3"       # keep last 3 files
+        tag: "main_app"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://main_api:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  movies_together_api:
+    build:
+      context: ./movies_together_api/
+    expose:
+      - "8001"
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./movies_together_api:/opt/app
+      - ./config:/opt/app/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"     # rotate when a log reaches 10MB
+        max-file: "3"       # keep last 3 files
+        tag: "fastapi_app"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://movies_together_api:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  theatre-db:
+    image: postgres:17.6-alpine
+    container_name: theatre-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - theatre_db_data:/var/lib/postgresql/data
+      - ./database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    expose:
+      - "${DB_PORT}"
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        tag: "theatre-db"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  redis:
+    image: redis:8.2.2-alpine
+    container_name: redis
+    env_file:
+      - .env
+    expose:
+      - "${REDIS_PORT}"
+    command: ["redis-server", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+        tag: "redis"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.5
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false   # disable security for test mode
+    expose:
+      - "${ELK_PORT}"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        tag: "elasticsearch"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://elasticsearch:9200/_cluster/health || exit 1" ]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  etl_worker:
+    build:
+      context: ./etl
+    env_file:
+      - .env
+    networks:
+      - app-network
+    volumes:
+      - ./etl:/opt/app
+      - ./config:/opt/config
+    depends_on:
+      main_api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "etl_worker"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  pgadmin:
+    image: 'docker.io/dpage/pgadmin4:9.8.0'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "e.a.buntov@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin/
+    networks:
+      - app-network
+
+
+  test:
+    build:
+      context: ./tests
+    command: [ "pytest", "-v", "./", "--maxfail=1", "--disable-warnings", "-q" ]
+    env_file:
+      - .env
+    volumes:
+      - ./:/opt/app/
+      - ./config:/opt/app/src/config
+    networks:
+      - app-network
+
+  auth:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_app
+
+  auth_db:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_db
+
+  auth_redis:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: auth_redis
+
+  jaeger:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: jaeger
+
+  nginx:
+    extends:
+      file: auth_service/docker-compose.yml
+      service: nginx
+
+
+volumes:
+  theatre_db_data:
+  redis_data:
+  es_data:
+  auth_db_data:
+  auth_redis_data:
+  pgadmin-data:
+  minio_data:
+
+networks:
+  app-network:
+    driver: bridge

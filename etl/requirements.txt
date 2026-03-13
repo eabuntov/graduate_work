@@ -1,0 +1,10 @@
+python-dotenv==1.1.1
+psycopg2-binary==2.9.10
+elasticsearch==9.1.1
+backoff==2.2.1
+redis==6.4.0
+requests==2.32.5
+sqlparse==0.5.3
+pydantic==2.12.3
+pydantic-settings==2.11.0
+requests==2.32.5
