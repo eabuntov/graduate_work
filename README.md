@@ -9,4 +9,6 @@
 Работа выполнялась в текущем репозитории https://github.com/eabuntov/graduate_work
 Тема - «Кино вместе»
 
+Видеодемонстрация - https://vkvideo.ru/video-230443677_456239018
+
 Общий репозиторий со всем кодом https://github.com/eabuntov/praktikum_async.git
