@@ -1,0 +1,184 @@
+@startuml
+title Online Cinema Platform – Analytics + Notification + Watch Together Architecture
+
+top to bottom direction
+
+actor User
+actor Admin
+actor Analyst
+
+package "Docker Network: app-network" {
+
+  component "NGINX\n(Reverse Proxy)" as nginx
+
+  together {
+    component "Django Admin\n(movies_admin)" as django
+    component "FastAPI App\n(Public API + Event SDK)" as fastapi
+  }
+
+  together {
+    component "Analytics Ingest API\n(FastAPI)" as ingest
+    component "Analytics Query API\n(FastAPI)" as analytics_api
+  }
+
+  ' ===== Movies Together =====
+  package "Watch Together Service" {
+
+    component "Watch Session API\n(FastAPI)" as watch_api
+    component "WebSocket Gateway\n(Session Sync + Chat)" as ws_gateway
+
+    database "Watch Session DB\n(PostgreSQL)" as watch_db
+  }
+
+  component "Auth Service" as auth
+  component "ETL / Stream Worker" as etl
+
+  queue "Kafka\n(Event Stream)" as kafka
+
+  database "ClickHouse\n(Analytics DWH)" as ch
+  database "Theatre DB\n(PostgreSQL)" as theatre_db
+  database "Auth DB\n(PostgreSQL)" as auth_db
+  database "Redis\n(Cache / Sessions / Rate Limits)" as redis
+
+  component "Jaeger\n(Tracing)" as jaeger
+
+  ' ===== Notification Service =====
+  package "Notification Service" {
+
+    component "Notification API\n(FastAPI)" as notif_api
+    component "Notification Worker\n(Email / SMS / Push)" as notif_worker
+    component "Auto Notification Generator\n(Cron / Scheduler)" as notif_gen
+
+    database "Notification DB\n(PostgreSQL)" as notif_db
+  }
+
+  ' ===== Storage =====
+  package "Media Storage" {
+
+    component "Media Service\n(Video metadata API)" as media_api
+    storage "S3 Object Storage\n(AWS S3 / MinIO)" as s3
+    component "CDN / Streaming Gateway" as cdn
+  }
+
+  ' ===== External Providers =====
+  cloud "Email Provider\n(SES / Sendgrid)" as email_provider
+}
+
+' ===== User traffic =====
+User --> nginx : HTTP(S)
+Admin --> nginx : HTTP(S)
+Analyst --> nginx : Analytics queries
+
+nginx --> django : Admin UI
+nginx --> fastapi : Public API
+nginx --> ingest : Event ingestion
+nginx --> analytics_api : Analytics API
+nginx --> watch_api : Watch Together API
+nginx --> ws_gateway : WebSocket
+
+' ===== Auth =====
+django --> auth
+fastapi --> auth
+watch_api --> auth
+ws_gateway --> auth
+
+auth --> auth_db
+auth --> redis
+auth --> jaeger
+
+' ===== Core business =====
+fastapi --> theatre_db
+fastapi --> redis
+
+' ===== Media =====
+django --> media_api : upload/manage videos
+media_api --> s3 : store video
+media_api --> theatre_db : save metadata
+
+User --> cdn : stream video
+cdn --> s3 : fetch video segments
+
+' ===== Watch Together =====
+fastapi --> watch_api : create watch session
+watch_api --> watch_db
+
+User --> ws_gateway : join watch session
+ws_gateway --> watch_db : validate session
+ws_gateway --> redis : session presence
+
+ws_gateway --> kafka : session events
+ws_gateway --> User : sync state + chat
+
+' ===== Analytics pipeline =====
+fastapi --> ingest : UI / business events
+watch_api --> ingest : watch session events
+ws_gateway --> ingest : playback events
+
+ingest --> kafka : publish events
+
+kafka --> etl : consume analytics streams
+etl --> ch : write aggregates
+
+analytics_api --> ch : read aggregates
+analytics_api --> redis : cache dashboards
+
+' ===== Notification flows =====
+
+fastapi --> notif_api : instant notification event
+notif_api --> notif_db : store notification
+notif_api --> kafka : publish notification event
+
+django --> notif_api : create / schedule notification
+notif_api --> notif_db
+notif_api --> kafka
+
+notif_gen --> notif_db : create logical notification
+notif_gen --> kafka : publish notification event
+
+kafka --> notif_worker : notification events
+notif_worker --> notif_db : resolve targets + send log
+notif_worker --> redis : rate limits / checkpoints
+notif_worker --> email_provider : send emails
+
+' ===== Observability =====
+fastapi --> jaeger
+watch_api --> jaeger
+ws_gateway --> jaeger
+ingest --> jaeger
+analytics_api --> jaeger
+notif_api --> jaeger
+notif_worker --> jaeger
+
+' ===== Notes =====
+note right of kafka
+Event topics:
+- analytics.events
+- watch.sessions
+- watch.playback
+- notification.events
+- notification.send
+end note
+
+note right of watch_db
+Tables:
+- watch_sessions
+- watch_session_participants
+- watch_chat_messages
+end note
+
+note right of s3
+Video stored as:
+- HLS segments
+- DASH segments
+- thumbnails
+end note
+
+note right of ws_gateway
+Responsibilities:
+- playback sync
+- chat broadcast
+- presence tracking
+- session state updates
+end note
+
+@enduml
