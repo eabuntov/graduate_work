@@ -2,6 +2,7 @@ import json
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
 import sys
 
 from starlette.staticfiles import StaticFiles
@@ -54,3 +55,7 @@ async def healthcheck():
     Returns 200 OK если приложение живо.
     """
     return {"status": "ok"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/favicon.ico")
