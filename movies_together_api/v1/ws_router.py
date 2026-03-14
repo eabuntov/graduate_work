@@ -94,7 +94,7 @@ async def watch_session_ws(
                 session.is_playing = True
                 await db.commit()
 
-                await manager.broadcast(session_id, {
+                await manager.broadcast(session_id, websocket, {
                     "type": "sync",
                     "position": session.current_position,
                     "is_playing": True,
@@ -106,7 +106,7 @@ async def watch_session_ws(
                 session.is_playing = False
                 await db.commit()
 
-                await manager.broadcast(session_id, {
+                await manager.broadcast(session_id,  websocket, {
                     "type": "sync",
                     "position": session.current_position,
                     "is_playing": False,
@@ -117,7 +117,7 @@ async def watch_session_ws(
                 session.current_position = float(data["position"])
                 await db.commit()
 
-                await manager.broadcast(session_id, {
+                await manager.broadcast(session_id, websocket, {
                     "type": "sync",
                     "position": session.current_position,
                     "is_playing": session.is_playing,
@@ -127,7 +127,7 @@ async def watch_session_ws(
             elif message_type == "chat":
                 message = data.get("message", "")
 
-                await manager.broadcast(session_id, {
+                await manager.broadcast(session_id,  websocket, {
                     "type": "chat",
                     "user_id": user_id,
                     "message": message,
@@ -160,6 +160,37 @@ async def create_watch_session(
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
 
+    # Check if there is already an active session for this movie
+    result = await db.execute(
+        select(WatchSession).where(
+            WatchSession.movie_id == movie.id,
+            WatchSession.status == "active"
+        )
+    )
+    session = result.scalar_one_or_none()
+
+    # If session exists, ensure the user is a participant
+    if session:
+        result = await db.execute(
+            select(WatchSessionParticipant).where(
+                WatchSessionParticipant.session_id == session.id,
+                WatchSessionParticipant.user_id == user_id,
+            )
+        )
+        participant = result.scalar_one_or_none()
+
+        if not participant:
+            participant = WatchSessionParticipant(
+                session_id=session.id,
+                user_id=user_id,
+                role="viewer",
+            )
+            db.add(participant)
+            await db.commit()
+
+        return {"session_id": str(session.id)}
+
+    # Otherwise create a new session
     session = WatchSession(
         id=uuid4(),
         movie_id=movie.id,
@@ -168,7 +199,6 @@ async def create_watch_session(
         current_position=0.0,
         is_playing=False,
     )
-
     db.add(session)
 
     participant = WatchSessionParticipant(
@@ -176,11 +206,8 @@ async def create_watch_session(
         user_id=user_id,
         role="host",
     )
-
     db.add(participant)
 
     await db.commit()
 
-    return {
-        "session_id": str(session.id)
-    }
+    return {"session_id": str(session.id)}
