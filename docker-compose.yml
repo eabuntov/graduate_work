@@ -140,7 +140,7 @@ services:
       - ./etl:/opt/app
       - ./config:/opt/config
     depends_on:
-      main_api:
+      theatre-db:
         condition: service_healthy
       redis:
         condition: service_healthy

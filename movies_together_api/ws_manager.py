@@ -20,12 +20,14 @@ class SessionManager:
             del self.active_connections[session_id]
             logging.debug(f"Websocket {websocket} disconnected from {session_id}")
 
-    async def broadcast(self, session_id: str, message: dict):
-        for session_id in self.active_connections.keys():
-            for ws in list(self.active_connections.get(session_id, [])):
-                try:
-                    await ws.send_json(message)
-                    logging.debug(f"Message {message} sent to {ws}")
-                except Exception as e:
-                    logging.debug(f"Message {message} failed to send to {ws} - {e}")
-                    self.disconnect(session_id, ws)
+    async def broadcast(self, session_id: str, sender: WebSocket, message: dict):
+        for ws in list(self.active_connections.get(session_id, [])):
+            if ws is sender:
+                continue
+
+            try:
+                await ws.send_json(message)
+                logging.debug(f"Message {message} sent to {ws}")
+            except Exception as e:
+                logging.debug(f"Message {message} failed to send to {ws} - {e}")
+                self.disconnect(session_id, ws)
