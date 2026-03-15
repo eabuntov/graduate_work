@@ -1,9 +1,10 @@
+import json
 import logging
 
 from fastapi import Depends, HTTPException, status, Request, WebSocket
 from fastapi.security import HTTPAuthorizationCredentials
 import jwt
-
+from config.config import settings
 from dependencies.security import bearer_scheme
 from dependencies.auth_settings import settings
 from fastapi.responses import RedirectResponse
@@ -65,21 +66,13 @@ async def require_user_ws(websocket: WebSocket) -> str:
             headers={"Location": f"/auth/login?next={websocket.url.path}"}
         )
 
-    jwt_options = {
-        'verify_signature': False,
-        'verify_exp': False,
-        'verify_nbf': False,
-        'verify_iat': False,
-        'verify_aud': False
-    }
-
     try:
         logging.debug(f"{access_token=}")
         payload = jwt.decode(
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=jwt_options,
+            options=json.loads(settings.jwt_options),
         )
         logging.debug(payload)
 
@@ -116,21 +109,13 @@ async def require_user(request: Request) -> str:
             headers={"Location": f"/auth/login?next={request.url.path}"}
         )
 
-    jwt_options = {
-        'verify_signature': False,
-        'verify_exp': False,
-        'verify_nbf': False,
-        'verify_iat': False,
-        'verify_aud': False
-    }
-
     try:
         logging.debug(f"{access_token=}")
         payload = jwt.decode(
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=jwt_options,
+            options=json.loads(settings.jwt_options),
         )
         logging.debug(payload)
 

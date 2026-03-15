@@ -28,6 +28,8 @@ DATABASE_URL=postgresql+asyncpg://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_
 
 JWT_ACCESS_SECRET=secret
 JWT_REFRESH_SECRET=secret
+JWT_OPTIONS="{'verify_signature': true, 'verify_exp': true, 'verify_nbf': true, 'verify_iat': true, 'verify_aud': true}"
+
 
 REDIS_URL="redis://auth-redis:${AUTH_REDIS_PORT}"
 
