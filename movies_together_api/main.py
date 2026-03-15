@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from sqlalchemy import text
 
 from config.config import setup_logging
 from v1.player import player_router
@@ -39,6 +38,7 @@ app.include_router(ws_router)
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():

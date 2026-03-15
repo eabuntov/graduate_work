@@ -1,13 +1,11 @@
 import json
 import logging
 
-from fastapi import Depends, HTTPException, status, Request, WebSocket
+from fastapi import Depends, HTTPException, Request, WebSocket
 from fastapi.security import HTTPAuthorizationCredentials
 import jwt
-from config.config import settings
 from dependencies.security import bearer_scheme
 from dependencies.auth_settings import settings
-from fastapi.responses import RedirectResponse
 
 
 def get_current_user(
@@ -31,6 +29,7 @@ def get_current_user(
 
     return payload
 
+
 def get_anonymous_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ):
@@ -47,11 +46,13 @@ def get_anonymous_user(
     except jwt.InvalidTokenError:
         return None
 
+
 def require_role(role: str):
     def checker(user=Depends(get_current_user)):
         if role not in user.get("roles", []):
             raise HTTPException(status_code=403, detail="Forbidden")
         return user
+
     return checker
 
 
@@ -62,7 +63,7 @@ async def require_user_ws(websocket: WebSocket) -> str:
         logging.debug("No access token")
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={websocket.url.path}"}
+            headers={"Location": f"/auth/login?next={websocket.url.path}"},
         )
 
     try:
@@ -87,15 +88,16 @@ async def require_user_ws(websocket: WebSocket) -> str:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={websocket.url.path}"}
+            headers={"Location": f"/auth/login?next={websocket.url.path}"},
         )
 
     except jwt.PyJWTError as e:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={websocket.url.path}"}
+            headers={"Location": f"/auth/login?next={websocket.url.path}"},
         )
+
 
 async def require_user(request: Request) -> str:
     access_token = request.cookies.get("access_token")
@@ -104,7 +106,7 @@ async def require_user(request: Request) -> str:
         logging.debug("No access token")
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )
 
     try:
@@ -129,12 +131,12 @@ async def require_user(request: Request) -> str:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )
 
     except jwt.PyJWTError as e:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )

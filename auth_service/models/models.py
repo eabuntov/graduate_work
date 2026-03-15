@@ -88,10 +88,10 @@ class UserCreate(UserBase):
 
     @classmethod
     def as_form(
-            cls,
-            email: EmailStr = Form(...),
-            password: str = Form(...),
-            full_name: str = Form(...),
+        cls,
+        email: EmailStr = Form(...),
+        password: str = Form(...),
+        full_name: str = Form(...),
     ):
         return cls(email=email, password=password, full_name=full_name)
 
@@ -241,11 +241,7 @@ class UserLogin(BaseModel):
     password: str
 
     @classmethod
-    def as_form(
-            cls,
-            email: EmailStr = Form(...),
-            password: str = Form(...)
-    ):
+    def as_form(cls, email: EmailStr = Form(...), password: str = Form(...)):
         return cls(email=email, password=password)
 
 

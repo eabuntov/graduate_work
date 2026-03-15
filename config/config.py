@@ -54,8 +54,6 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file="../.env", env_file_encoding="utf-8")
 
-    jwt_options: str = Field(..., alias="JWT_OPTIONS")
-
     # Database settings
     db_user: str = Field(..., alias="DB_USER")
     db_password: str = Field(..., alias="DB_PASSWORD")
@@ -77,7 +75,6 @@ class Settings(BaseSettings):
     # Redis settings
     redis_host: str = Field(..., alias="REDIS_HOST")
     redis_port: int = Field(6379, alias="REDIS_PORT")
-
 
 
 settings = Settings()

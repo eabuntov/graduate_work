@@ -12,7 +12,9 @@ from security.auth import require_permissions, role_types_required
 from services.role_service import RoleService
 from rate_limit.rate_limiter import rate_limit
 
-roles_router = APIRouter(prefix="/roles", tags=["roles"], dependencies=[Depends(rate_limit("auth"))])
+roles_router = APIRouter(
+    prefix="/roles", tags=["roles"], dependencies=[Depends(rate_limit("auth"))]
+)
 
 
 @roles_router.post(

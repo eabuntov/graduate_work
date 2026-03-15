@@ -13,7 +13,7 @@ from sqlalchemy.orm import DeclarativeBase
 # Configuration
 # -----------------------------------------------------------------------------
 
-DATABASE_URL = f"postgresql+asyncpg://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}@theatre-db:5432/{os.getenv("DB_NAME")}"
+DATABASE_URL = f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@theatre-db:5432/{os.getenv('DB_NAME')}"
 
 
 # -----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ engine = create_async_engine(
     max_overflow=20,
     pool_pre_ping=True,
     pool_recycle=1800,
-    echo=False
+    echo=False,
 )
 
 
@@ -46,6 +46,7 @@ AsyncSessionLocal = async_sessionmaker(
 # Base Class
 # -----------------------------------------------------------------------------
 
+
 class Base(DeclarativeBase):
     pass
 
@@ -53,6 +54,7 @@ class Base(DeclarativeBase):
 # -----------------------------------------------------------------------------
 # Dependency
 # -----------------------------------------------------------------------------
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """

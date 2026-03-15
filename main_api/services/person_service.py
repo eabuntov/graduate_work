@@ -23,10 +23,11 @@ class PersonService:
         return await self.repo.get_by_id(person_id)
 
     async def list_people(
-        self, sort: Optional[str], sort_order: str,
-            pagination: LimitOffsetParams = None
+        self, sort: Optional[str], sort_order: str, pagination: LimitOffsetParams = None
     ) -> list[Person]:
-        cache_key = f"people:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        cache_key = (
+            f"people:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        )
         cached = await get_from_cache(cache_key)
         if cached:
             return [Person(**doc) for doc in cached]

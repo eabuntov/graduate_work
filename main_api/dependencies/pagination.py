@@ -1,5 +1,6 @@
 from fastapi import Query
 
+
 class LimitOffsetParams:
     def __init__(
         self,

@@ -5,9 +5,7 @@ from fastapi import HTTPException, Request
 from config.settings import settings
 
 redis_conn = aioredis.from_url(
-    settings.REDIS_URL,
-    decode_responses=True,
-    encoding="utf-8"
+    settings.REDIS_URL, decode_responses=True, encoding="utf-8"
 )
 
 with open("rate_limit/rate-counter.lua", "r", encoding="utf-8") as f:
@@ -19,10 +17,12 @@ lua_script = redis_conn.register_script(script_text)
 async def allow_request(user_id: str, service: str) -> bool:
     key = f"rate:{service}:{user_id}"
     now = int(time.time())
-    return bool(lua_script(
-        keys=[key],
-        args=[now, settings.WINDOW_SECONDS, settings.RATE_LIMIT],
-    ))
+    return bool(
+        lua_script(
+            keys=[key],
+            args=[now, settings.WINDOW_SECONDS, settings.RATE_LIMIT],
+        )
+    )
 
 
 def rate_limit(service_name: str):

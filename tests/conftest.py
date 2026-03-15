@@ -2,7 +2,6 @@ import sys
 from uuid import uuid4
 
 import pytest
-from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
 
 from movies_together_api.main import app
@@ -13,6 +12,7 @@ sys.path.append("/opt/app/src")
 # -----------------------------------------------------------------------------
 # Test DB Setup
 # -----------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_database():
@@ -39,6 +39,7 @@ def client():
 # -----------------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------------
+
 
 def create_test_session(db):
     movie_id = uuid4()

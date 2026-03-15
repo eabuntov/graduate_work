@@ -29,7 +29,7 @@ class FilmService:
         min_rating: Optional[float] = 0.0,
         max_rating: Optional[float] = 10.0,
         type_: Optional[str] = "movie",
-        pagination: LimitOffsetParams = None
+        pagination: LimitOffsetParams = None,
     ) -> list[FilmWork]:
         if not pagination:
             pagination = LimitOffsetParams()
@@ -64,9 +64,7 @@ class FilmService:
         return await self.repo.search(body)
 
     async def search_films(
-            self,
-            query: str,
-            pagination: LimitOffsetParams = None
+        self, query: str, pagination: LimitOffsetParams = None
     ) -> list[FilmWork]:
         """Full-text search for films by title or description."""
         if not pagination:

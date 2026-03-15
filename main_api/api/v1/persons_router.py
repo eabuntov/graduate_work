@@ -11,7 +11,9 @@ from dependencies.elastic_client import get_elastic_client
 
 from dependencies.pagination import LimitOffsetParams
 
-persons_router = APIRouter(prefix="/persons", tags=["persons"], dependencies=[Depends(require_user)])
+persons_router = APIRouter(
+    prefix="/persons", tags=["persons"], dependencies=[Depends(require_user)]
+)
 
 
 def get_person_service(

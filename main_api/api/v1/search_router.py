@@ -11,7 +11,9 @@ from dependencies.elastic_client import get_elastic_client
 
 from dependencies.pagination import LimitOffsetParams
 
-films_search_router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(require_user)])
+films_search_router = APIRouter(
+    prefix="/search", tags=["search"], dependencies=[Depends(require_user)]
+)
 
 
 def get_film_service(
@@ -33,6 +35,4 @@ async def search_films(
     Search films by title or description.
     Returns paginated FilmWork results.
     """
-    return await service.search_films(
-        query=query, pagination=pagination
-    )
+    return await service.search_films(query=query, pagination=pagination)

@@ -23,12 +23,13 @@ class GenreService:
         return await self.repo.get_by_id(genre_id)
 
     async def list_genres(
-        self, sort: Optional[str], sort_order: str,
-            pagination: LimitOffsetParams = None
+        self, sort: Optional[str], sort_order: str, pagination: LimitOffsetParams = None
     ) -> list[Genre]:
         if not pagination:
             pagination = LimitOffsetParams()
-        cache_key = f"genres:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        cache_key = (
+            f"genres:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        )
         cached = await get_from_cache(cache_key)
         if cached:
             return [Genre(**doc) for doc in cached]

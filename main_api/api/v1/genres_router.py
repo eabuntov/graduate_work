@@ -10,9 +10,9 @@ from dependencies.elastic_client import get_elastic_client
 
 from dependencies.pagination import LimitOffsetParams
 
-genres_router = APIRouter(prefix="/genres", tags=["genres"], dependencies=[Depends(require_user)])
-
-
+genres_router = APIRouter(
+    prefix="/genres", tags=["genres"], dependencies=[Depends(require_user)]
+)
 
 
 def get_genre_service(

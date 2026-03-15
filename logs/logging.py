@@ -35,7 +35,6 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log, ensure_ascii=False)
 
 
-
 def setup_logging():
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 

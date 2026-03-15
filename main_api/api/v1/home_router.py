@@ -46,6 +46,7 @@ async def home(
         {"request": {}, "films": films},
     )
 
+
 @home_router.get("/movies/{movie_id}", response_class=HTMLResponse)
 async def get_movie_page(
     request: Request,
@@ -58,10 +59,5 @@ async def get_movie_page(
         raise HTTPException(status_code=404, detail="Movie not found")
 
     return templates.TemplateResponse(
-        "movie.html",
-        {
-            "request": request,
-            "film": film,
-            "movie_id": movie_id
-        }
+        "movie.html", {"request": request, "film": film, "movie_id": movie_id}
     )

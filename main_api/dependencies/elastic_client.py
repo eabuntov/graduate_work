@@ -1,5 +1,6 @@
 from config.config import settings
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch
+
 
 async def get_elastic_client() -> AsyncElasticsearch:
     """Dependency that provides a single Elasticsearch client."""

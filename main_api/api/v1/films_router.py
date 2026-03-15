@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from typing import List, Optional, Annotated
 from models.models import FilmWork
@@ -11,8 +11,9 @@ from dependencies.elastic_client import get_elastic_client
 
 from dependencies.pagination import LimitOffsetParams
 
-films_router = APIRouter(prefix="/films", tags=["films"], dependencies=[Depends(require_user)])
-
+films_router = APIRouter(
+    prefix="/films", tags=["films"], dependencies=[Depends(require_user)]
+)
 
 
 def get_film_service(

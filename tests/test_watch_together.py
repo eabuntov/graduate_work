@@ -1,12 +1,7 @@
-import pytest
 from http import HTTPStatus
 from uuid import uuid4
 
-from fastapi.testclient import TestClient
 
-from main import app
-from db import Base, engine, SessionLocal
-from models import WatchSession, WatchSessionParticipant, Movie
 
 from tests.conftest import create_test_session
 
@@ -14,6 +9,7 @@ from tests.conftest import create_test_session
 # -----------------------------------------------------------------------------
 # HTTP Router Tests
 # -----------------------------------------------------------------------------
+
 
 def test_watch_page_returns_html(client, db):
     """Check that /watch/{session_id} returns HTML page."""
@@ -39,6 +35,7 @@ def test_watch_page_not_found(client):
 # WebSocket Router Tests
 # -----------------------------------------------------------------------------
 
+
 def test_websocket_connect_and_receive_sync(client, db):
     """Client connects and receives initial sync state."""
 
@@ -48,7 +45,6 @@ def test_websocket_connect_and_receive_sync(client, db):
         f"/ws/watch/{session_id}",
         headers={"authorization": "test-token"},
     ) as websocket:
-
         data = websocket.receive_json()
 
         assert data["type"] == "sync"
@@ -66,13 +62,14 @@ def test_websocket_play_event_broadcast(client, db):
         f"/ws/watch/{session_id}",
         headers={"authorization": "test-token"},
     ) as websocket:
-
         websocket.receive_json()  # initial sync
 
-        websocket.send_json({
-            "type": "play",
-            "position": 10.0,
-        })
+        websocket.send_json(
+            {
+                "type": "play",
+                "position": 10.0,
+            }
+        )
 
         data = websocket.receive_json()
 
@@ -90,13 +87,14 @@ def test_websocket_chat_event(client, db):
         f"/ws/watch/{session_id}",
         headers={"authorization": "test-token"},
     ) as websocket:
-
         websocket.receive_json()  # initial sync
 
-        websocket.send_json({
-            "type": "chat",
-            "message": "Hello world",
-        })
+        websocket.send_json(
+            {
+                "type": "chat",
+                "message": "Hello world",
+            }
+        )
 
         data = websocket.receive_json()
 
