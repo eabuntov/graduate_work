@@ -3,10 +3,13 @@ from elasticsearch import AsyncElasticsearch
 from models.models import FilmWork
 from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
+from typing import Annotated
 
 from dependencies.auth import require_user
 
 from dependencies.elastic_client import get_elastic_client
+
+from dependencies.pagination import LimitOffsetParams
 
 films_search_router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(require_user)])
 
@@ -22,9 +25,8 @@ def get_film_service(
 # --- Endpoint ---
 @films_search_router.get("/", response_model=list[FilmWork])
 async def search_films(
+    pagination: Annotated[LimitOffsetParams, Depends(LimitOffsetParams)],
     query: str = Query(..., description="Search query string"),
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     service: FilmService = Depends(get_film_service),
 ):
     """
@@ -32,5 +34,5 @@ async def search_films(
     Returns paginated FilmWork results.
     """
     return await service.search_films(
-        query=query, limit=limit, page_size=offset
+        query=query, pagination=pagination
     )

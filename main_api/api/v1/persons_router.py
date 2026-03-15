@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from models.models import Person
 from repositories.elastic_repository import ElasticRepository
 from services.person_service import PersonService
@@ -8,6 +8,8 @@ from services.person_service import PersonService
 from dependencies.auth import require_user
 
 from dependencies.elastic_client import get_elastic_client
+
+from dependencies.pagination import LimitOffsetParams
 
 persons_router = APIRouter(prefix="/persons", tags=["persons"], dependencies=[Depends(require_user)])
 
@@ -32,11 +34,10 @@ async def get_person(
 
 @persons_router.get("/", response_model=List[Person])
 async def list_people(
+    pagination: Annotated[LimitOffsetParams, Depends(LimitOffsetParams)],
     sort: Optional[str] = Query(None),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     service: PersonService = Depends(get_person_service),
 ):
     """List or search people."""
-    return await service.list_people(sort, sort_order, limit, offset)
+    return await service.list_people(sort, sort_order, pagination)
