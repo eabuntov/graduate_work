@@ -5,19 +5,12 @@ from models.models import FilmWork
 from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
 
-from config.config import settings
 from dependencies.auth import require_user
+
+from dependencies.elastic_client import get_elastic_client
 
 films_router = APIRouter(prefix="/films", tags=["films"], dependencies=[Depends(require_user)])
 
-
-async def get_elastic_client() -> AsyncElasticsearch:
-    """Dependency that provides a single Elasticsearch client."""
-    client = AsyncElasticsearch(hosts=[settings.elk_url], verify_certs=False)
-    try:
-        yield client
-    finally:
-        await client.close()
 
 
 def get_film_service(

@@ -1,23 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from typing import List, Optional
-
-from config.config import settings
 from models.models import Person
 from repositories.elastic_repository import ElasticRepository
 from services.person_service import PersonService
 
 from dependencies.auth import require_user
 
+from dependencies.elastic_client import get_elastic_client
+
 persons_router = APIRouter(prefix="/persons", tags=["persons"], dependencies=[Depends(require_user)])
-
-
-async def get_elastic_client() -> AsyncElasticsearch:
-    client = AsyncElasticsearch(hosts=[settings.elk_url], verify_certs=False)
-    try:
-        yield client
-    finally:
-        await client.close()
 
 
 def get_person_service(

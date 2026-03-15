@@ -1,25 +1,14 @@
 from fastapi import APIRouter, Depends, Query
 from elasticsearch import AsyncElasticsearch
-from typing import Any, AsyncGenerator
-
-from config.config import settings
 from models.models import FilmWork
 from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
 
 from dependencies.auth import require_user
 
+from dependencies.elastic_client import get_elastic_client
+
 films_search_router = APIRouter(prefix="/search", tags=["search"], dependencies=[Depends(require_user)])
-
-
-# --- Dependencies ---
-async def get_elastic_client() -> AsyncGenerator[AsyncElasticsearch, Any]:
-    """Provide a single Elasticsearch client per request."""
-    client = AsyncElasticsearch(hosts=[settings.elk_url], verify_certs=False)
-    try:
-        yield client
-    finally:
-        await client.close()
 
 
 def get_film_service(
