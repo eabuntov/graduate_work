@@ -43,3 +43,8 @@ SCHEMA_FILE=/opt/app/es_schema.json
 
 REDIS_PORT=6379
 REDIS_HOST=redis
+
+S3_USER=minio
+S3_PASSWORD=
+
+PGADMIN_EMAIL=
