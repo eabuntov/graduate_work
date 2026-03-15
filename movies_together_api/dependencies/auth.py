@@ -16,7 +16,7 @@ def get_current_user(
     if credentials is None:
         return {}
 
-    token = credentials
+    token = credentials.credentials
     logging.debug(f"{token=}")
 
     try:
