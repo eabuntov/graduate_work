@@ -20,17 +20,6 @@ manager = SessionManager()
 templates = Jinja2Templates(directory="templates")
 
 
-# -----------------------------------------------------------------------------
-# Mock Auth
-# -----------------------------------------------------------------------------
-
-async def get_current_user_id(websocket: WebSocket) -> str:
-    token = websocket.headers.get("authorization")
-    if not token:
-        raise HTTPException(status_code=401)
-    return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
-
-
 
 # -----------------------------------------------------------------------------
 # WebSocket Watch Session
