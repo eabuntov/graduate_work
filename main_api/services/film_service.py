@@ -61,28 +61,40 @@ class FilmService:
         return await self.repo.search(body)
 
     async def search_films(
-        self, query: str, page_number: int = 1, page_size: int = 10
+            self,
+            query: str,
+            limit: int = 10,
+            offset: int = 0,
     ) -> list[FilmWork]:
         """Full-text search for films by title or description."""
-        cache_key = f"films:search:{query}:{page_number}:{page_size}"
+
+        cache_key = f"films:search:{query}:{limit}:{offset}"
         cached = await get_from_cache(cache_key)
         if cached:
             return [FilmWork(**doc) for doc in cached]
 
-        # Elasticsearch query
         body = {
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["title", "description", "genres", "directors_names", "poster_url"],
+                    "fields": [
+                        "title",
+                        "description",
+                        "genres",
+                        "directors_names",
+                        "poster_url",
+                    ],
                     "fuzziness": "auto",
                 }
             },
-            "from": (page_number - 1) * page_size,
-            "size": page_size,
+            "from": offset,
+            "size": limit,
         }
 
         logger.info(
-            f"Searching films: query='{query}', page={page_number}, size={page_size}"
+            f"Searching films: query='{query}', offset={offset}, limit={limit}"
         )
-        return await self.repo.search(body)
+
+        result = await self.repo.search(body)
+
+        return [FilmWork(**doc) for doc in result]

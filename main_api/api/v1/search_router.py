@@ -23,8 +23,8 @@ def get_film_service(
 @films_search_router.get("/", response_model=list[FilmWork])
 async def search_films(
     query: str = Query(..., description="Search query string"),
-    page_number: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(50, ge=1, le=100, description="Results per page"),
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     service: FilmService = Depends(get_film_service),
 ):
     """
@@ -32,5 +32,5 @@ async def search_films(
     Returns paginated FilmWork results.
     """
     return await service.search_films(
-        query=query, page_number=page_number, page_size=page_size
+        query=query, limit=limit, page_size=offset
     )

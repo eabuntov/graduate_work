@@ -244,31 +244,29 @@
             "description": "Текст поискового запроса (например: star wars)."
           },
           {
-            "name": "page_number",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "description": "Номер страницы",
-              "default": 1,
-              "title": "Page Number"
-            },
-            "description": "Номер страницы для пагинации."
-          },
-          {
-            "name": "page_size",
+            "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "description": "Количество результатов на странице",
-              "default": 50,
-              "title": "Page Size"
+              "default": 10,
+              "title": "Limit"
             },
-            "description": "Количество результатов, возвращаемых на одной странице."
+            "description": "Количество фильмов для отображения на странице."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Смещение выборки (для пагинации)."
           }
         ],
         "responses": {
