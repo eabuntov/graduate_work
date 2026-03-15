@@ -17,7 +17,6 @@ def get_current_user(
         return {}
 
     token = credentials.credentials
-    logging.debug(f"{token=}")
 
     try:
         payload = jwt.decode(
@@ -67,7 +66,6 @@ async def require_user_ws(websocket: WebSocket) -> str:
         )
 
     try:
-        logging.debug(f"{access_token=}")
         payload = jwt.decode(
             access_token,
             settings.JWT_ACCESS_SECRET,
@@ -110,7 +108,6 @@ async def require_user(request: Request) -> str:
         )
 
     try:
-        logging.debug(f"{access_token=}")
         payload = jwt.decode(
             access_token,
             settings.JWT_ACCESS_SECRET,
