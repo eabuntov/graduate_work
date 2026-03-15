@@ -34,11 +34,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Override FastAPI's openapi generation function
 def custom_openapi():
     custom_openapi_schema["components"]["securitySchemes"] = {
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT"
-        }
+        "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
     }
     custom_openapi_schema["security"] = [{"BearerAuth": []}]
     return custom_openapi_schema
@@ -55,6 +51,7 @@ async def healthcheck():
     Returns 200 OK если приложение живо.
     """
     return {"status": "ok"}
+
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():

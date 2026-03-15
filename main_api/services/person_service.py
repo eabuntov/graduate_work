@@ -4,6 +4,8 @@ from api.v1.caching import get_from_cache
 from models.models import Person
 from repositories.elastic_repository import ElasticRepository
 
+from dependencies.pagination import LimitOffsetParams
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,9 +23,11 @@ class PersonService:
         return await self.repo.get_by_id(person_id)
 
     async def list_people(
-        self, sort: Optional[str], sort_order: str, limit: int, offset: int
+        self, sort: Optional[str], sort_order: str, pagination: LimitOffsetParams = None
     ) -> list[Person]:
-        cache_key = f"people:list:{sort}:{sort_order}:{limit}:{offset}"
+        cache_key = (
+            f"people:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        )
         cached = await get_from_cache(cache_key)
         if cached:
             return [Person(**doc) for doc in cached]
@@ -32,8 +36,8 @@ class PersonService:
 
         body = {
             "query": {"bool": {"must": must or [{"match_all": {}}]}},
-            "from": offset,
-            "size": limit,
+            "from": pagination.offset,
+            "size": pagination.limit,
         }
 
         if sort:

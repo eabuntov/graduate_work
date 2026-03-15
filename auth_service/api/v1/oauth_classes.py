@@ -11,7 +11,6 @@ def build_oauth_providers() -> list["OAuthProvider"]:
     return providers
 
 
-
 class OAuthProvider(ABC):
     providers: dict[str, "OAuthProvider"] = {}
 

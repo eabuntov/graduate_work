@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from config.settings import settings
-from services.tracing import setup_tracing
 from api.v1.api_router import api_router
 
 

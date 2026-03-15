@@ -103,11 +103,11 @@ class UserService:
         return permissions
 
     async def get_or_create_oauth_user(
-            self,
-            provider: str,
-            provider_id: str,
-            email: str | None,
-            full_name: str | None,
+        self,
+        provider: str,
+        provider_id: str,
+        email: str | None,
+        full_name: str | None,
     ):
         user = await self.repo.get_by_oauth(provider, provider_id)
 

@@ -160,8 +160,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ROOT_USER: ${S3_USER}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -169,7 +169,7 @@ services:
   pgadmin:
     image: 'docker.io/dpage/pgadmin4:9.8.0'
     environment:
-      PGADMIN_DEFAULT_EMAIL: "e.a.buntov@gmail.com"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${DB_PASSWORD}
     ports:
       - "8080:80"

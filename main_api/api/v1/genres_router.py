@@ -1,22 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from typing import List, Optional
-
-from config.config import settings
+from typing import List, Optional, Annotated
 from models.models import Genre
 from repositories.elastic_repository import ElasticRepository
 from services.genre_service import GenreService
 from dependencies.auth import require_user
 
-genres_router = APIRouter(prefix="/genres", tags=["genres"], dependencies=[Depends(require_user)])
+from dependencies.elastic_client import get_elastic_client
 
+from dependencies.pagination import LimitOffsetParams
 
-async def get_elastic_client() -> AsyncElasticsearch:
-    client = AsyncElasticsearch(hosts=[settings.elk_url], verify_certs=False)
-    try:
-        yield client
-    finally:
-        await client.close()
+genres_router = APIRouter(
+    prefix="/genres", tags=["genres"], dependencies=[Depends(require_user)]
+)
 
 
 def get_genre_service(
@@ -37,11 +33,10 @@ async def get_genre(genre_id: str, service: GenreService = Depends(get_genre_ser
 
 @genres_router.get("/", response_model=List[Genre])
 async def list_genres(
+    pagination: Annotated[LimitOffsetParams, Depends(LimitOffsetParams)],
     sort: Optional[str] = Query(None),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     service: GenreService = Depends(get_genre_service),
 ):
     """List or search genres."""
-    return await service.list_genres(sort, sort_order, limit, offset)
+    return await service.list_genres(sort, sort_order, pagination)

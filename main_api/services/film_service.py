@@ -4,6 +4,8 @@ from api.v1.caching import get_from_cache
 from models.models import FilmWork
 from repositories.elastic_repository import ElasticRepository
 
+from dependencies.pagination import LimitOffsetParams
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,10 +29,11 @@ class FilmService:
         min_rating: Optional[float] = 0.0,
         max_rating: Optional[float] = 10.0,
         type_: Optional[str] = "movie",
-        limit: int = 10,
-        offset: int = 0,
+        pagination: LimitOffsetParams = None,
     ) -> list[FilmWork]:
-        cache_key = f"films:list:{sort}:{sort_order}:{min_rating}:{max_rating}:{type_}:{limit}:{offset}"
+        if not pagination:
+            pagination = LimitOffsetParams()
+        cache_key = f"films:list:{sort}:{sort_order}:{min_rating}:{max_rating}:{type_}:{pagination.limit}:{pagination.offset}"
         cached = await get_from_cache(cache_key)
         if cached:
             return [FilmWork(**doc) for doc in cached]
@@ -50,8 +53,8 @@ class FilmService:
 
         body = {
             "query": {"bool": {"must": must or [{"match_all": {}}], "filter": filters}},
-            "from": offset,
-            "size": limit,
+            "from": pagination.offset,
+            "size": pagination.limit,
         }
 
         if sort:
@@ -61,28 +64,38 @@ class FilmService:
         return await self.repo.search(body)
 
     async def search_films(
-        self, query: str, page_number: int = 1, page_size: int = 10
+        self, query: str, pagination: LimitOffsetParams = None
     ) -> list[FilmWork]:
         """Full-text search for films by title or description."""
-        cache_key = f"films:search:{query}:{page_number}:{page_size}"
+        if not pagination:
+            pagination = LimitOffsetParams()
+        cache_key = f"films:search:{query}:{pagination.limit}:{pagination.offset}"
         cached = await get_from_cache(cache_key)
         if cached:
             return [FilmWork(**doc) for doc in cached]
 
-        # Elasticsearch query
         body = {
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["title", "description", "genres", "directors_names", "poster_url"],
+                    "fields": [
+                        "title",
+                        "description",
+                        "genres",
+                        "directors_names",
+                        "poster_url",
+                    ],
                     "fuzziness": "auto",
                 }
             },
-            "from": (page_number - 1) * page_size,
-            "size": page_size,
+            "from": pagination.offset,
+            "size": pagination.limit,
         }
 
         logger.info(
-            f"Searching films: query='{query}', page={page_number}, size={page_size}"
+            f"Searching films: query='{query}', offset={pagination.offset}, limit={pagination.limit}"
         )
-        return await self.repo.search(body)
+
+        result = await self.repo.search(body)
+
+        return [FilmWork(**doc) for doc in result]

@@ -4,6 +4,8 @@ from api.v1.caching import get_from_cache
 from models.models import Genre
 from repositories.elastic_repository import ElasticRepository
 
+from dependencies.pagination import LimitOffsetParams
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,9 +23,13 @@ class GenreService:
         return await self.repo.get_by_id(genre_id)
 
     async def list_genres(
-        self, sort: Optional[str], sort_order: str, limit: int, offset: int
+        self, sort: Optional[str], sort_order: str, pagination: LimitOffsetParams = None
     ) -> list[Genre]:
-        cache_key = f"genres:list:{sort}:{sort_order}:{limit}:{offset}"
+        if not pagination:
+            pagination = LimitOffsetParams()
+        cache_key = (
+            f"genres:list:{sort}:{sort_order}:{pagination.limit}:{pagination.offset}"
+        )
         cached = await get_from_cache(cache_key)
         if cached:
             return [Genre(**doc) for doc in cached]
@@ -32,8 +38,8 @@ class GenreService:
 
         body = {
             "query": {"bool": {"must": must or [{"match_all": {}}]}},
-            "from": offset,
-            "size": limit,
+            "from": pagination.offset,
+            "size": pagination.limit,
         }
 
         if sort:

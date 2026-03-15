@@ -1,29 +1,23 @@
-from typing import Any, AsyncGenerator, Optional
+from typing import Optional, Annotated
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from elasticsearch import AsyncElasticsearch
 
-from config.config import settings
 from repositories.elastic_repository import ElasticRepository
 from services.film_service import FilmService
 from models.models import FilmWork
 
 from dependencies.auth import require_user
 
+from dependencies.elastic_client import get_elastic_client
+
+from dependencies.pagination import LimitOffsetParams
+
 templates = Jinja2Templates(directory="templates")
 
 home_router = APIRouter(tags=["home"], dependencies=[Depends(require_user)])
-
-
-async def get_elastic_client() -> AsyncGenerator[AsyncElasticsearch, Any]:
-    """Provides a shared Elasticsearch client for dependency injection."""
-    client = AsyncElasticsearch(hosts=[settings.elk_url], verify_certs=False)
-    try:
-        yield client
-    finally:
-        await client.close()
 
 
 def get_film_service(
@@ -36,22 +30,22 @@ def get_film_service(
 
 @home_router.get("/", response_class=HTMLResponse)
 async def home(
+    pagination: Annotated[LimitOffsetParams, Depends(LimitOffsetParams)],
     sort: Optional[str] = Query(None),
     sort_order: str = Query("desc", regex="^(asc|desc)$"),
     min_rating: Optional[float] = Query(None),
     max_rating: Optional[float] = Query(None),
     type: Optional[str] = Query(None, alias="type"),
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     service: FilmService = Depends(get_film_service),
 ):
     films = await service.list_films(
-        sort, sort_order, min_rating, max_rating, type, limit, offset
+        sort, sort_order, min_rating, max_rating, type, pagination
     )
     return templates.TemplateResponse(
         "index.html",
         {"request": {}, "films": films},
     )
+
 
 @home_router.get("/movies/{movie_id}", response_class=HTMLResponse)
 async def get_movie_page(
@@ -65,10 +59,5 @@ async def get_movie_page(
         raise HTTPException(status_code=404, detail="Movie not found")
 
     return templates.TemplateResponse(
-        "movie.html",
-        {
-            "request": request,
-            "film": film,
-            "movie_id": movie_id
-        }
+        "movie.html", {"request": request, "film": film, "movie_id": movie_id}
     )

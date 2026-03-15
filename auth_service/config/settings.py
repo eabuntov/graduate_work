@@ -28,25 +28,30 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field("INFO", env="LOG_LEVEL")
     JAEGER_AGENT_HOST: str = Field("jaeger", env="JAEGER_AGENT_HOST")
     JAEGER_AGENT_PORT: str = Field("6831", env="JAEGER_AGENT_PORT")
-    OTEL_TRACES_SAMPLER: str = Field("parentbased_traceidratio", env="OTEL_TRACES_SAMPLER")
+    OTEL_TRACES_SAMPLER: str = Field(
+        "parentbased_traceidratio", env="OTEL_TRACES_SAMPLER"
+    )
     OTEL_TRACES_SAMPLER_ARG: str = Field("0.1", env="OTEL_TRACES_SAMPLER_ARG")
-    OAUTH_PROVIDERS: dict = Field({
-        "yandex": {
-            "client_id": "YANDEX_CLIENT_ID",
-            "client_secret": "YANDEX_CLIENT_SECRET",
-            "authorize_url": "https://oauth.yandex.ru/authorize",
-            "access_token_url": "https://oauth.yandex.ru/token",
-            "userinfo_url": "https://login.yandex.ru/info",
-            "scope": "login:email",
-        },
-        "google": {
-            "client_id": "GOOGLE_CLIENT_ID",
-            "client_secret": "GOOGLE_CLIENT_SECRET",
-            "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
-            "access_token_url": "https://oauth2.googleapis.com/token",
-            "userinfo_url": "https://www.googleapis.com/oauth2/v3/userinfo",
-            "scope": "openid email profile",
-        },
-    })
+    OAUTH_PROVIDERS: dict = Field(
+        {
+            "yandex": {
+                "client_id": "YANDEX_CLIENT_ID",
+                "client_secret": "YANDEX_CLIENT_SECRET",
+                "authorize_url": "https://oauth.yandex.ru/authorize",
+                "access_token_url": "https://oauth.yandex.ru/token",
+                "userinfo_url": "https://login.yandex.ru/info",
+                "scope": "login:email",
+            },
+            "google": {
+                "client_id": "GOOGLE_CLIENT_ID",
+                "client_secret": "GOOGLE_CLIENT_SECRET",
+                "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
+                "access_token_url": "https://oauth2.googleapis.com/token",
+                "userinfo_url": "https://www.googleapis.com/oauth2/v3/userinfo",
+                "scope": "openid email profile",
+            },
+        }
+    )
+
 
 settings = Settings()

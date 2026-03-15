@@ -4,7 +4,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis import Redis
 from fastapi import Depends, HTTPException, status
 
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 from repositories.login_history_repository import LoginHistoryRepository
 from repositories.user_repository import UserRepository

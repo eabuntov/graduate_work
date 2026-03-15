@@ -44,7 +44,9 @@ class FilmWork(Base):
         {"schema": "content"},
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False
+    )
 
     title = Column(Text, nullable=False)
     description = Column(Text)
@@ -53,7 +55,9 @@ class FilmWork(Base):
     type = Column(Text, nullable=False)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
-    modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    modified = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     poster_url = Column(Text)
 
 
@@ -65,13 +69,10 @@ class FilmWorkStorage(Base):
         UUID(as_uuid=True),
         ForeignKey("content.film_work.id"),
         primary_key=True,
-        nullable=False
+        nullable=False,
     )
 
-    video_url: Mapped[str] = mapped_column(
-        String,
-        nullable=False
-    )
+    video_url: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class WatchSession(Base):

@@ -4,13 +4,16 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from dependencies.auth import require_user, require_user_ws
 from db import get_db
-from db import get_db
-from models import WatchSession, WatchSessionParticipant, CreateWatchSessionRequest, FilmWork
+from models import (
+    WatchSession,
+    WatchSessionParticipant,
+    CreateWatchSessionRequest,
+    FilmWork,
+)
 from ws_manager import SessionManager
 
 
@@ -21,20 +24,9 @@ templates = Jinja2Templates(directory="templates")
 
 
 # -----------------------------------------------------------------------------
-# Mock Auth
-# -----------------------------------------------------------------------------
-
-async def get_current_user_id(websocket: WebSocket) -> str:
-    token = websocket.headers.get("authorization")
-    if not token:
-        raise HTTPException(status_code=401)
-    return "10a6e3d6-71ba-427d-9f05-e0409a207b06"
-
-
-
-# -----------------------------------------------------------------------------
 # WebSocket Watch Session
 # -----------------------------------------------------------------------------
+
 
 @ws_router.websocket("/watch/{session_id}")
 async def watch_session_ws(
@@ -56,7 +48,6 @@ async def watch_session_ws(
         await websocket.close(code=4004)
         return
 
-
     logging.debug(f"{user_id=}")
 
     result = await db.execute(
@@ -77,12 +68,14 @@ async def watch_session_ws(
 
     try:
         # Send authoritative state
-        await websocket.send_json({
-            "type": "sync",
-            "position": session.current_position,
-            "is_playing": session.is_playing,
-            "server_time": time.time(),
-        })
+        await websocket.send_json(
+            {
+                "type": "sync",
+                "position": session.current_position,
+                "is_playing": session.is_playing,
+                "server_time": time.time(),
+            }
+        )
 
         while True:
             data = await websocket.receive_json()
@@ -94,45 +87,61 @@ async def watch_session_ws(
                 session.is_playing = True
                 await db.commit()
 
-                await manager.broadcast(session_id, websocket, {
-                    "type": "sync",
-                    "position": session.current_position,
-                    "is_playing": True,
-                    "server_time": time.time(),
-                })
+                await manager.broadcast(
+                    session_id,
+                    websocket,
+                    {
+                        "type": "sync",
+                        "position": session.current_position,
+                        "is_playing": True,
+                        "server_time": time.time(),
+                    },
+                )
 
             elif message_type == "pause":
                 session.current_position = float(data["position"])
                 session.is_playing = False
                 await db.commit()
 
-                await manager.broadcast(session_id,  websocket, {
-                    "type": "sync",
-                    "position": session.current_position,
-                    "is_playing": False,
-                    "server_time": time.time(),
-                })
+                await manager.broadcast(
+                    session_id,
+                    websocket,
+                    {
+                        "type": "sync",
+                        "position": session.current_position,
+                        "is_playing": False,
+                        "server_time": time.time(),
+                    },
+                )
 
             elif message_type == "seek":
                 session.current_position = float(data["position"])
                 await db.commit()
 
-                await manager.broadcast(session_id, websocket, {
-                    "type": "sync",
-                    "position": session.current_position,
-                    "is_playing": session.is_playing,
-                    "server_time": time.time(),
-                })
+                await manager.broadcast(
+                    session_id,
+                    websocket,
+                    {
+                        "type": "sync",
+                        "position": session.current_position,
+                        "is_playing": session.is_playing,
+                        "server_time": time.time(),
+                    },
+                )
 
             elif message_type == "chat":
                 message = data.get("message", "")
 
-                await manager.broadcast(session_id,  websocket, {
-                    "type": "chat",
-                    "user_id": user_id,
-                    "message": message,
-                    "timestamp": time.time(),
-                })
+                await manager.broadcast(
+                    session_id,
+                    websocket,
+                    {
+                        "type": "chat",
+                        "user_id": user_id,
+                        "message": message,
+                        "timestamp": time.time(),
+                    },
+                )
 
     except WebSocketDisconnect as e:
         logging.error(e)
@@ -142,6 +151,7 @@ async def watch_session_ws(
 # -----------------------------------------------------------------------------
 # Create Watch Session
 # -----------------------------------------------------------------------------
+
 
 @ws_router.post("/watch-session", response_model=None)
 async def create_watch_session(
@@ -163,8 +173,7 @@ async def create_watch_session(
     # Check if there is already an active session for this movie
     result = await db.execute(
         select(WatchSession).where(
-            WatchSession.movie_id == movie.id,
-            WatchSession.status == "active"
+            WatchSession.movie_id == movie.id, WatchSession.status == "active"
         )
     )
     session = result.scalar_one_or_none()

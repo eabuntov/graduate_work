@@ -1,12 +1,11 @@
+import json
 import logging
 
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
 import jwt
-
 from dependencies.security import bearer_scheme
 from dependencies.auth_settings import settings
-from fastapi.responses import RedirectResponse
 
 
 def get_current_user(
@@ -15,8 +14,7 @@ def get_current_user(
     if credentials is None:
         return {}
 
-    token = credentials
-    logging.debug(f"{token=}")
+    token = credentials.credentials
 
     try:
         payload = jwt.decode(
@@ -30,6 +28,7 @@ def get_current_user(
         return {}
 
     return payload
+
 
 def get_anonymous_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
@@ -47,11 +46,13 @@ def get_anonymous_user(
     except jwt.InvalidTokenError:
         return None
 
+
 def require_role(role: str):
     def checker(user=Depends(get_current_user)):
         if role not in user.get("roles", []):
             raise HTTPException(status_code=403, detail="Forbidden")
         return user
+
     return checker
 
 
@@ -62,24 +63,15 @@ async def require_user(request: Request) -> str:
         logging.debug("No access token")
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )
 
-    jwt_options = {
-        'verify_signature': False,
-        'verify_exp': False,
-        'verify_nbf': False,
-        'verify_iat': False,
-        'verify_aud': False
-    }
-
     try:
-        logging.debug(f"{access_token=}")
         payload = jwt.decode(
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=jwt_options,
+            options=json.loads(settings.jwt_options),
         )
         logging.debug(payload)
 
@@ -96,12 +88,12 @@ async def require_user(request: Request) -> str:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )
 
     except jwt.PyJWTError as e:
         logging.error(e)
         raise HTTPException(
             status_code=303,
-            headers={"Location": f"/auth/login?next={request.url.path}"}
+            headers={"Location": f"/auth/login?next={request.url.path}"},
         )
