@@ -3,6 +3,7 @@ from pydantic import Field, ConfigDict
 
 
 class Settings(BaseSettings):
+    jwt_options: str = Field(..., alias="JWT_OPTIONS")
     model_config = ConfigDict(extra="allow", env_file=".env")
     # ---------------------- JWT ----------------------
     JWT_ACCESS_SECRET: str = Field(..., env="JWT_ACCESS_SECRET")

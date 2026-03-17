@@ -215,7 +215,7 @@ ws.onmessage = (event) => {
     if (data.type === "chat") {
         const div = document.createElement("div");
         div.className = "chat-message";
-        div.textContent = `${data.user_id}: ${data.message}`;
+        div.textContent = `${data.email}: ${data.message}`;
 
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;

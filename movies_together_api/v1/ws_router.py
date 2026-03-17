@@ -32,11 +32,11 @@ templates = Jinja2Templates(directory="templates")
 async def watch_session_ws(
     websocket: WebSocket,
     session_id: str,
-    user_id: str = Depends(require_user_ws),
+    user: tuple = Depends(require_user_ws),
     db: AsyncSession = Depends(get_db),
 ):
     session_uuid = UUID(session_id)
-
+    user_id, email = user
     result = await db.execute(
         select(WatchSession).where(WatchSession.id == session_uuid)
     )
@@ -125,7 +125,7 @@ async def watch_session_ws(
                         "type": "sync",
                         "position": session.current_position,
                         "is_playing": session.is_playing,
-                        "server_time": time.time(),
+                        "server_time": time.time()
                     },
                 )
 
@@ -140,6 +140,7 @@ async def watch_session_ws(
                         "user_id": user_id,
                         "message": message,
                         "timestamp": time.time(),
+                        "email": email
                     },
                 )
 

@@ -71,7 +71,7 @@ async def require_user(request: Request) -> str:
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=json.loads(settings.jwt_options),
+            options=json.loads(settings.jwt_options.replace("'",'"')),
         )
         logging.debug(payload)
 
