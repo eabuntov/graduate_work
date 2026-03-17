@@ -1,0 +1,168 @@
+<head>
+    <meta charset="UTF-8">
+    <title>Practix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef3f6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            margin-right: 2rem;
+            font-size: 1.5rem;
+        }
+        nav a {
+            margin-right: 1.5rem;
+            text-decoration: none;
+            color: black;
+            font-weight: 500;
+        }
+        .section {
+            margin: 2rem;
+        }
+        .section h2 {
+            margin-bottom: 1rem;
+        }
+        .films {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .film-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 180px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .film-card:hover {
+            transform: scale(1.05);
+        }
+        .film-poster {
+            width: 100%;
+            height: 270px;
+            background-color: #ccc;
+            background-size: cover;
+            background-position: center;
+        }
+        .film-info {
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .film-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin: 0.3rem 0;
+        }
+        .film-rating {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .hero {
+            position: relative;
+            height: 500px;
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            padding: 2rem;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2));
+        }
+
+        .hero-content {
+            position: relative;
+            max-width: 800px;
+            z-index: 2;
+        }
+
+        .match-info {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .match-info span {
+            margin-right: 1rem;
+        }
+
+        .film-title {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .film-description {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background: #d62828;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: black;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .details-section {
+            background: white;
+            margin: 2rem;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            row-gap: 1rem;
+        }
+
+        .details-label {
+            font-weight: bold;
+            color: #444;
+        }
+    </style>
+  <link href="https://vjs.zencdn.net/8.23.4/video-js.css" rel="stylesheet" />
+
+  <!-- If you'd like to support IE8 (for Video.js versions prior to v7) -->
+  <!-- <script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script> -->
+</head>
