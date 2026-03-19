@@ -12,6 +12,17 @@
         <a href="#">Latest</a>
         <a href="#">My List</a>
     </nav>
+    <nav style="margin-left: auto;">
+    <a href="/">Home</a>
+    <a href="#">TV Shows</a>
+    <a href="#">Films</a>
+    <a href="#">Latest</a>
+    <a href="#">My List</a>
+
+    {% if user_email %}
+        <a href="mailto:{{ user_email }}">{{ user_email }}</a>
+    {% endif %}
+</nav>
 </header>
 
 <div class="watch-wrapper">

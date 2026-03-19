@@ -8,6 +8,7 @@ from sqlalchemy import select
 from db import get_db
 from models import WatchSession, FilmWork, FilmWorkStorage
 
+from dependencies.auth import require_user
 
 player_router = APIRouter(prefix="/player")
 templates = Jinja2Templates(directory="templates")
@@ -17,6 +18,7 @@ templates = Jinja2Templates(directory="templates")
 async def watch_player(
     request: Request,
     session_id: str,
+    user: tuple = Depends(require_user),
     db: AsyncSession = Depends(get_db),
 ):
     # Validate session
@@ -46,5 +48,6 @@ async def watch_player(
             "session_id": session_id,
             "movie_title": movie.title,
             "video_url": movie.video_url,
+            "user_email": user[1]
         },
     )

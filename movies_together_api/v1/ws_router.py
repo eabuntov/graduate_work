@@ -157,11 +157,10 @@ async def watch_session_ws(
 @ws_router.post("/watch-session", response_model=None)
 async def create_watch_session(
     payload: CreateWatchSessionRequest,
-    user_id: str = Depends(require_user),
+    user: tuple = Depends(require_user),
     db: AsyncSession = Depends(get_db),
 ):
-    logging.debug(f"{user_id=}")
-
+    user_id, email = user
     # Validate movie exists
     result = await db.execute(
         select(FilmWork).where(FilmWork.id == UUID(payload.movie_id))

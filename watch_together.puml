@@ -1,0 +1,75 @@
+@startuml
+top to bottom direction
+
+together {
+actor User
+actor Admin
+}
+
+package "Сеть Docker: app-network" {
+
+  component "NGINX\n(Обратный прокси)" as nginx
+
+  together {
+    component "Django - панель администратора\n(movies_admin)" as django
+    component "FastAPI\n(Публичный API)" as fastapi
+  }
+
+  ' ===== Movies Together =====
+  package "Совместный просмотр" {
+
+    component "API сессий просмотра\n(FastAPI + WebSocket)" as watch_api
+    database "Redis\n(Кэш)" as watch_redis
+    database "БД просмотра\n(PostgreSQL)" as watch_db
+  }
+
+package "Сервис авторизации" {
+  component "API авторизации\n(FastAPI)" as auth
+  database "БД авторизации\n(PostgreSQL)" as auth_db
+  database "Redis\n(Кэш)" as auth_redis
+}
+
+  ' ===== Storage =====
+  package "Хранение" {
+    component "ETL / Stream Worker" as etl
+    database "БД метаданных\n(PostgreSQL)" as theatre_db
+    database "Elastic search" as elk
+    storage "S3 хранилище\n(MinIO)" as s3
+    database "Redis\n(Кэш)" as redis
+  }
+
+}
+
+' ===== User traffic =====
+User --> nginx : HTTP(S)
+Admin --> nginx : HTTP(S)
+
+nginx --> django
+nginx --> fastapi
+nginx --> watch_api
+
+' ===== Auth =====
+django --> auth
+fastapi --> auth
+watch_api --> auth
+
+auth <--> auth_redis
+auth_redis <--> auth_db
+
+' ===== Core business =====
+django --> theatre_db
+fastapi --> theatre_db
+fastapi --> redis
+
+' ===== Media =====
+fastapi --> s3
+theatre_db --> etl
+etl --> elk
+
+' ===== Watch Together =====
+fastapi --> watch_api
+fastapi --> elk
+watch_api <--> watch_redis
+watch_redis <--> watch_db
+
+@enduml
