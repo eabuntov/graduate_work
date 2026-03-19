@@ -1,0 +1,74 @@
+@startuml
+actor User
+
+participant "NGINX" as nginx
+participant "FastAPI\n(Публичный API)" as fastapi
+participant "API авторизации" as auth
+participant "API просмотра\n(HTTP + WS)" as watch_api
+participant "Redis (просмотр)" as watch_redis
+database "БД просмотра" as watch_db
+database "БД метаданных" as theatre_db
+participant "S3 (MinIO)" as s3
+
+== Старт сессии ==
+
+User -> nginx : POST /watch-sessions (movie_id)
+nginx -> fastapi
+fastapi -> auth : валидация токена
+auth --> fastapi : user_id
+
+fastapi -> theatre_db : Проверка наличия фильма
+theatre_db --> fastapi : фильм
+
+fastapi -> watch_api : создание сессии
+watch_api -> watch_db : добавление участника
+watch_api --> fastapi : session_id
+
+fastapi --> nginx
+nginx --> User : session_id
+
+== Открытие страницы просмотра ==
+
+User -> nginx : GET /watch/{session_id}
+nginx -> fastapi
+fastapi -> watch_api : валидация сессии
+watch_api -> watch_db : чтение сессии
+watch_api --> fastapi : сессия OK
+
+fastapi --> nginx : HTML (страница плеера)
+nginx --> User
+
+== Присоединение к WebSocket ==
+
+User -> nginx : WS /ws/watch/{session_id}
+nginx -> watch_api
+
+watch_api -> auth : валидация токена token
+auth --> watch_api : user_id
+
+watch_api -> watch_db : проверка участников
+watch_api -> watch_redis : регистрация в сессии
+
+watch_api --> User : начальная синхронизация (позиция просмотра, состояние плеера)
+
+== Синхронизация просмотра ==
+
+User -> watch_api : WS play/pause/seek
+
+watch_api -> watch_db : обновление состояния
+watch_api -> watch_redis : публикация события
+
+watch_api --> User : broadcast синхронизация
+
+== Чат ==
+
+User -> watch_api : WS сообщение чата
+watch_api -> watch_redis : публикация чата
+watch_api --> User : broadcast синхронизация
+
+== Видео поток ==
+
+User -> s3 : GET видео
+s3 --> User : видео поток
+
+@enduml

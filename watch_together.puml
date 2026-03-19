@@ -12,7 +12,7 @@ package "Сеть Docker: app-network" {
 
   together {
     component "Django - панель администратора\n(movies_admin)" as django
-    component "FastAPI\n(Публичный API)" as fastapi
+    component "Публичный API\n(FastAPI)" as fastapi
   }
 
   ' ===== Movies Together =====
@@ -31,7 +31,7 @@ package "Сервис авторизации" {
 
   ' ===== Storage =====
   package "Хранение" {
-    component "ETL / Stream Worker" as etl
+    component "ETL\nОбработка потока данных" as etl
     database "БД метаданных\n(PostgreSQL)" as theatre_db
     database "Elastic search" as elk
     storage "S3 хранилище\n(MinIO)" as s3
@@ -58,8 +58,8 @@ auth_redis <--> auth_db
 
 ' ===== Core business =====
 django --> theatre_db
-fastapi --> theatre_db
-fastapi --> redis
+redis <--> theatre_db
+fastapi <--> redis
 
 ' ===== Media =====
 fastapi --> s3
