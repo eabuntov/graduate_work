@@ -56,7 +56,7 @@ def require_role(role: str):
     return checker
 
 
-async def require_user_ws(websocket: WebSocket) -> str:
+async def require_user_ws(websocket: WebSocket) -> tuple:
     access_token = websocket.cookies.get("access_token")
 
     if not access_token:
@@ -71,18 +71,19 @@ async def require_user_ws(websocket: WebSocket) -> str:
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=json.loads(settings.jwt_options),
+            options=json.loads(settings.jwt_options.replace("'",'"')),
         )
         logging.debug(payload)
 
         user_id = payload.get("sub")
+        email = payload.get("email")
 
         if not user_id:
             raise jwt.PyJWTError("Invalid token payload")
 
         websocket.state.user_id = str(user_id)
 
-        return str(user_id)
+        return user_id, email
 
     except jwt.ExpiredSignatureError as e:
         logging.error(e)
@@ -99,7 +100,7 @@ async def require_user_ws(websocket: WebSocket) -> str:
         )
 
 
-async def require_user(request: Request) -> str:
+async def require_user(request: Request) -> tuple:
     access_token = request.cookies.get("access_token")
 
     if not access_token:
@@ -114,18 +115,19 @@ async def require_user(request: Request) -> str:
             access_token,
             settings.JWT_ACCESS_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options=json.loads(settings.jwt_options),
+            options=json.loads(settings.jwt_options.replace("'",'"')),
         )
         logging.debug(payload)
 
         user_id = payload.get("sub")
+        email = payload.get("email")
 
         if not user_id:
             raise jwt.PyJWTError("Invalid token payload")
 
         request.state.user_id = str(user_id)
 
-        return str(user_id)
+        return user_id, email
 
     except jwt.ExpiredSignatureError as e:
         logging.error(e)
